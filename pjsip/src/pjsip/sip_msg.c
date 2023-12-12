@@ -230,6 +230,7 @@ static int init_status_phrase()
     pj_strset2( &status_phrase[491], "Request Pending");
     pj_strset2( &status_phrase[493], "Undecipherable");
     pj_strset2( &status_phrase[494], "Security Agreement Required");
+	pj_strset2( &status_phrase[499], "Unsatisfied Condition");
 
     pj_strset2( &status_phrase[500], "Server Internal Error");
     pj_strset2( &status_phrase[501], "Not Implemented");
