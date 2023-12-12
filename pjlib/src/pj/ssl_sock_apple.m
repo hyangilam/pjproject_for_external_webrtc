@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+#include <pj/config.h>
 #include <pj/ssl_sock.h>
 #include <pj/os.h>
 #include <pj/pool.h>
@@ -28,7 +28,7 @@
 #define THIS_FILE               "ssl_sock_apple.m"
 
 /* Set to 1 to enable debugging messages. */
-#define SSL_DEBUG  0
+#define SSL_DEBUG  1
 
 #define SSL_SOCK_IMP_USE_CIRC_BUF
 #define SSL_SOCK_IMP_USE_OWN_NETWORK
@@ -320,6 +320,9 @@ pj_status_t ssl_network_event_poll()
 
         switch (event->type) {
             case EVENT_ACCEPT:
+#if SSL_DEBUG
+                PJ_LOG(3,(THIS_FILE, "EVENT_ACCEPT"));
+#endif
                 ret = ssock_on_accept_complete(event->ssock,
                     PJ_INVALID_SOCKET,
                     event->body.accept_ev.newconn,
@@ -328,23 +331,38 @@ pj_status_t ssl_network_event_poll()
                     event->body.accept_ev.status);
                 break;
             case EVENT_CONNECT:
+#if SSL_DEBUG
+                PJ_LOG(3,(THIS_FILE, "EVENT_CONNECT"));
+#endif
                 ret = ssock_on_connect_complete(event->ssock,
                     event->body.connect_ev.status);
                 break;
             case EVENT_VERIFY_CERT:
+#if SSL_DEBUG
+                PJ_LOG(3,(THIS_FILE, "EVENT_VERIFY_CERT"));
+#endif
                 verify_cert(assock, event->ssock->cert);
                 break;
             case EVENT_HANDSHAKE_COMPLETE:
+#if SSL_DEBUG
+                PJ_LOG(3,(THIS_FILE, "EVENT_HANDSHAKE_COMPLETE"));
+#endif
                 event->ssock->ssl_state = SSL_STATE_ESTABLISHED;
                 ret = on_handshake_complete(event->ssock,
                     event->body.handshake_ev.status);
                 break;
             case EVENT_DATA_SENT:
+#if SSL_DEBUG
+                PJ_LOG(3,(THIS_FILE, "EVENT_DATA_SENT"));
+#endif
                 ret = ssock_on_data_sent(event->ssock,
                     event->body.data_sent_ev.send_key,
                     event->body.data_sent_ev.sent);
                 break;
             case EVENT_DATA_READ:
+#if SSL_DEBUG
+                PJ_LOG(3,(THIS_FILE, "EVENT_DATA_READ"));
+#endif
                 ret = ssock_on_data_read(event->ssock,
                     event->body.data_read_ev.data,
                     event->body.data_read_ev.size,
@@ -621,6 +639,9 @@ static pj_status_t verify_cert(applessl_sock_t *assock, pj_ssl_cert_t *cert)
     pj_status_t status = PJ_SUCCESS;
     OSStatus err = noErr;
     
+#if SSL_DEBUG
+    PJ_LOG(3, (THIS_FILE, "verify_cert - #1"));
+#endif
     if (trust && cert && cert->CA_file.slen) {
         status = create_data_from_file(&ca_data, &cert->CA_file,
                                        (cert->CA_path.slen? &cert->CA_path:
@@ -1072,6 +1093,9 @@ static pj_status_t network_create_params(pj_ssl_sock_t * ssock,
 
     parameters = nw_parameters_create_secure_tcp(configure_tls,
                      NW_PARAMETERS_DEFAULT_CONFIGURATION);
+    if(pj_cfg()->transport.forceUseCellularData) {
+        nw_parameters_set_required_interface_type(parameters, nw_interface_type_cellular);
+    }
 
     protocol_stack = nw_parameters_copy_default_protocol_stack(parameters);
     ip_options = nw_protocol_stack_copy_internet_protocol(protocol_stack);
