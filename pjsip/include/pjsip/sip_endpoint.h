@@ -352,6 +352,8 @@ PJ_DECL(pj_pool_t*) pjsip_endpt_create_pool( pjsip_endpoint *endpt,
 PJ_DECL(void) pjsip_endpt_release_pool( pjsip_endpoint *endpt,
                                         pj_pool_t *pool );
 
+PJ_DECL(pj_pool_t*) pjsip_endpt_get_pool(pjsip_endpoint *endpt);
+
 /**
  * Find transaction in endpoint's transaction table by the transaction's key.
  * This function normally is only used by modules. The key for a transaction

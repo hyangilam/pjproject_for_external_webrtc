@@ -20,8 +20,6 @@
 #ifndef __PJSIP_SIMPLE_CONFERENCE_H__
 #define __PJSIP_SIMPLE_CONFERENCE_H__
 
-// nugucall - conference
-
 /**
  * @file conference.h
  * @brief SIP Extension for Conference (RFC 4575)

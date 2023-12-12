@@ -385,6 +385,26 @@ void SipRxData::fromPj(pjsip_rx_data &rdata)
 
     info        = pjsip_rx_data_get_info(&rdata);
     wholeMsg    = string(rdata.msg_info.msg_buf, rdata.msg_info.len);
+    if(rdata.msg_info.tphone){
+        tphone	= string(rdata.msg_info.tphone->tphone.ptr, rdata.msg_info.tphone->tphone.slen);
+    }
+	if(rdata.msg_info.reason){
+		reason	= string(rdata.msg_info.reason->reason.ptr, rdata.msg_info.reason->reason.slen);
+	}
+	if(rdata.msg_info.xtype){
+		xType	= string(rdata.msg_info.xtype->xtype.ptr, rdata.msg_info.xtype->xtype.slen);
+	}
+	if(rdata.msg_info.xinfo){
+		xInfo	= string(rdata.msg_info.xinfo->xinfo.ptr, rdata.msg_info.xinfo->xinfo.slen);
+	}
+	if(rdata.msg_info.xdid){
+		xDid	= string(rdata.msg_info.xdid->xdid.ptr, rdata.msg_info.xdid->xdid.slen);
+	}
+	if(rdata.msg_info.passertedid){
+		pAssertedID	= string(rdata.msg_info.passertedid->passertedid.ptr, rdata.msg_info.passertedid->passertedid.slen);
+        paidDisplay = string(((pjsip_name_addr*)rdata.msg_info.passertedid->uri)->display.ptr, ((pjsip_name_addr*)rdata.msg_info.passertedid->uri)->display.slen);
+        paidUser = string(((pjsip_sip_uri*)(((pjsip_name_addr*)rdata.msg_info.passertedid->uri)->uri))->user.ptr, ((pjsip_sip_uri*)(((pjsip_name_addr*)rdata.msg_info.passertedid->uri)->uri))->user.slen);
+	}
     pj_sockaddr_print(&rdata.pkt_info.src_addr, straddr, sizeof(straddr), 3);
     srcAddress  = straddr;
     pjRxData    = (void *)&rdata;

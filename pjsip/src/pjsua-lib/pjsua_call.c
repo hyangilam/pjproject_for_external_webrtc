@@ -2364,6 +2364,12 @@ PJ_DEF(pj_status_t) pjsua_call_get_info( pjsua_call_id call_id,
     pj_strncpy(&info->remote_info, &dlg->remote.info_str,
                sizeof(info->buf_.remote_info));
 
+	info->remote_info_Display.ptr = info->buf_.remote_info_Display;
+	pj_strncpy(&info->remote_info_Display, &((pjsip_name_addr*)dlg->remote.info->uri)->display,
+				sizeof(info->buf_.remote_info_Display));
+	info->remote_info_User.ptr = info->buf_.remote_info_User;
+	pj_strncpy(&info->remote_info_User, &((pjsip_sip_uri*)(((pjsip_name_addr*)dlg->remote.info->uri)->uri))->user,
+				sizeof(info->buf_.remote_info_User));
     /* remote contact */
     if (dlg->remote.contact) {
         int len;
@@ -2389,6 +2395,49 @@ PJ_DEF(pj_status_t) pjsua_call_get_info( pjsua_call_id call_id,
     info->call_id.ptr = info->buf_.call_id;
     pj_strncpy(&info->call_id, &dlg->call_id->id,
                sizeof(info->buf_.call_id));
+	info->toheader.ptr = info->buf_.toheader;
+    if(dlg->toheader) {
+		pj_strncpy(&info->toheader, &((pjsip_sip_uri*)(((pjsip_name_addr*)dlg->toheader->uri)->uri))->user, sizeof(info->buf_.toheader));
+    }
+	info->sktnumpidheader.ptr = info->buf_.sktnumpidheader;
+    if(dlg->sktnumpidheader) {
+		pj_strncpy(&info->sktnumpidheader, &((pjsip_sip_uri*)(((pjsip_name_addr*)dlg->sktnumpidheader->uri)->uri))->user, sizeof(info->buf_.sktnumpidheader));
+    }
+    info->tphone.ptr = info->buf_.tphone;
+    if(dlg->tphone) {
+        pj_strncpy(&info->tphone, &dlg->tphone->tphone, sizeof(info->buf_.tphone));
+    }
+    info->reason.ptr = info->buf_.reason;
+    if(dlg->reason) {
+        pj_strncpy(&info->reason, &dlg->reason->reason,
+                   sizeof(info->buf_.reason));
+    }
+    info->xtype.ptr = info->buf_.xtype;
+    if(dlg->xtype) {
+        pj_strncpy(&info->xtype, &dlg->xtype->xtype,
+                   sizeof(info->buf_.xtype));
+    }
+    if(dlg->remote.paid) {
+		info->passertedid.ptr = info->buf_.passertedid;
+        pj_strncpy(&info->passertedid, &dlg->remote.paid->passertedid,
+                   sizeof(info->buf_.passertedid));
+		info->paidDisplay.ptr = info->buf_.paidDisplay;
+		pj_strncpy(&info->paidDisplay, &((pjsip_name_addr*)dlg->remote.paid->uri)->display,
+					sizeof(info->buf_.paidDisplay));
+		info->paidUser.ptr = info->buf_.paidUser;
+		pj_strncpy(&info->paidUser, &((pjsip_sip_uri*)(((pjsip_name_addr*)dlg->remote.paid->uri)->uri))->user,
+					sizeof(info->buf_.paidUser));
+    }
+    info->xinfo.ptr = info->buf_.xinfo;
+    if(dlg->xinfo) {
+        pj_strncpy(&info->xinfo, &dlg->xinfo->xinfo,
+                   sizeof(info->buf_.xinfo));
+    }
+    info->xdid.ptr = info->buf_.xdid;
+    if(dlg->xdid) {
+        pj_strncpy(&info->xdid, &dlg->xdid->xdid,
+                   sizeof(info->buf_.xdid));
+    }
 
     /* call setting */
     pj_memcpy(&info->setting, &call->opt, sizeof(call->opt));

@@ -126,6 +126,13 @@ PJ_IDEF(pj_str_t*) pj_strcpy2(pj_str_t *dst, const char *src)
     return dst;
 }
 
+PJ_IDEF(char*) pj_strcpy3(char *dst, pj_str_t *src)
+{
+    pj_ssize_t dst_slen = src ? src->slen : 0 ;
+    if (dst_slen > 0)
+        pj_memcpy(dst, src->ptr, dst_slen);
+    return dst;
+}
 PJ_IDEF(pj_str_t*) pj_strncpy( pj_str_t *dst, const pj_str_t *src, 
                                pj_ssize_t max)
 {

@@ -122,6 +122,15 @@ PJ_DEF(void) pjsua_acc_config_dup( pj_pool_t *pool,
         }
     }
 
+    pj_list_init(&dst->default_custom_hdr_list);
+    if (!pj_list_empty(&src->default_custom_hdr_list)) {
+        const pjsip_hdr *hdr;
+        hdr = src->default_custom_hdr_list.next;
+        while (hdr != &src->default_custom_hdr_list) {
+            pj_list_push_back(&dst->default_custom_hdr_list, pjsip_hdr_clone(pool, hdr));
+            hdr = hdr->next;
+        }
+    }
     pj_list_init(&dst->sub_hdr_list);
     if (!pj_list_empty(&src->sub_hdr_list)) {
         const pjsip_hdr *hdr;
@@ -501,6 +510,7 @@ PJ_DEF(pj_status_t) pjsua_acc_add( const pjsua_acc_config *cfg,
         acc->pool = pjsua_pool_create("acc%p", PJSUA_POOL_LEN_ACC,
                                   PJSUA_POOL_INC_ACC);
 
+	pj_list_init(&pjsip_default_custom_hdr);
     /* Copy config */
     pjsua_acc_config_dup(acc->pool, &pjsua_var.acc[id].cfg, cfg);
     
@@ -926,6 +936,7 @@ PJ_DEF(pj_status_t) pjsua_acc_modify( pjsua_acc_id acc_id,
         unreg_first = PJ_TRUE;
     }
 
+    update_hdr_list(acc->pool, &acc->cfg.default_custom_hdr_list, &cfg->default_custom_hdr_list);
     /* SUBSCRIBE header list */
     update_hdr_list(acc->pool, &acc->cfg.sub_hdr_list, &cfg->sub_hdr_list);
 
@@ -2724,6 +2735,7 @@ static pj_status_t pjsua_regc_init(int acc_id)
     /* Add custom request headers specified in the account config */
     pjsip_regc_add_headers(acc->regc, &acc->cfg.reg_hdr_list);
 
+    pjsip_msg_set_default_custom_hdr(pjsip_endpt_get_pool(pjsua_var.endpt), &acc->cfg.default_custom_hdr_list);
     /* Add other request headers. */
     if (pjsua_var.ua_cfg.user_agent.slen) {
         pjsip_hdr hdr_list;

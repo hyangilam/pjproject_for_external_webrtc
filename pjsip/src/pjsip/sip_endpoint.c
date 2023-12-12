@@ -700,6 +700,11 @@ PJ_DEF(void) pjsip_endpt_release_pool( pjsip_endpoint *endpt, pj_pool_t *pool )
      */
 }
 
+PJ_DEF(pj_pool_t*) pjsip_endpt_get_pool(pjsip_endpoint *endpt)
+{
+    return endpt->pool;
+}
+
 
 PJ_DEF(pj_status_t) pjsip_endpt_handle_events2(pjsip_endpoint *endpt,
                                                const pj_time_val *max_timeout,

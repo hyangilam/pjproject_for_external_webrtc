@@ -20,8 +20,6 @@
 #ifndef __PJSIP_SIMPLE_CONF_INFO_H__
 #define __PJSIP_SIMPLE_CONF_INFO_H__
 
-// nugucall - conference
-
 /**
  * @file conference_info.h
  * @brief CONFERENCE-INFO/Event Package for Conference State (RFC 4575)
@@ -392,8 +390,7 @@ typedef struct pjsip_conf_description_type {
 
 } pjsip_conf_description_type;
 
-// nugucall - conference-info simple
-typedef struct pjsip_conf_status_type {	
+typedef struct pjsip_conf_status_type {
     #define         CONF_DESC_ELEM_CONNECTED         	1
     #define         CONF_DESC_ELEM_TOTAL              	1<<1
     #define         CONF_DESC_ELEM_EVENT            	1<<2
@@ -421,40 +418,11 @@ typedef struct pjsip_conf_type pjsip_conf_type;
 struct pjsip_conf_type {
 	pj_bool_t		_is_valid;	/**< Internal flag.		    */
 
-#if 0 // nugucall - conference-info simple
-	pj_uint16_t		_nReceived;
-
-    #define         CONF_INFO_ATTR_ENTITY             1
-    #define         CONF_INFO_ATTR_STATE              1<<1
-    #define         CONF_INFO_ATTR_VERSION            1<<2
-    #define         CONF_INFO_ELEM_CONF_DESC          1<<3
-    #define         CONF_INFO_ELEM_HOST_INFO          1<<4
-    #define         CONF_INFO_ELEM_CONF_STATE         1<<5
-    #define         CONF_INFO_ELEM_USERS              1<<6
-    #define         CONF_INFO_ELEM_SIDEBARS_BY_REF    1<<7
-    #define         CONF_INFO_ELEM_SIDEBARS_BY_VAL    1<<8
-    pj_uint16_t     flag;
-
-	pj_str_t name;				// "conference-info"
-	// elements
-	pjsip_conf_description_type conf_description;		// minOccurs="0"
-	pjsip_conf_host_type host_info;	// minOccurs="0"	
-	pjsip_conf_state_type conf_state;	// minOccurs="0"
-	pjsip_conf_users_type users;		// minOccurs="0"	// permissible for partial notifications
-	pjsip_conf_uris_type sidebars_by_ref;	// minOccurs="0"	// permissible for partial notifications
-	pjsip_conf_sidebars_by_val_type* sidebars_by_val;	// minOccurs="0"	// permissible for partial notifications
-
-	// attributes
-	pj_str_t entity;			// type="xs:anyURI" use="required"
-	pjsip_conf_state_enum state;	// type="state-type" use="optional" default="full"
-	pj_uint32_t	version;		// type="xs:unsignedInt" use="optional"
-#else
 	#define         CONF_INFO_ELEM_STATUS             1
     pj_uint16_t     flag;
 
 	pj_str_t name;				// "conference-info"
 	pjsip_conf_status_type		status;
-#endif
 };
 
 typedef struct pjsip_conf_type_list pjsip_conf_type_list;
@@ -560,9 +528,6 @@ PJ_DECL(int)		 pjconfinfo_print(const pjconfinfo_xml_node_conf* pres, char *buf,
 /******************************************************************************
  * API for managing conference-info node.
  *****************************************************************************/
-#if 0 // nugucall - conference-info simple
-PJ_DECL(pj_status_t) pjconfinfo_parse_confinfo_attr(pj_pool_t *pool, pjconfinfo_xml_node_conf *confinfo_root_element, pjsip_conf_type *conf_info);
-#endif
 PJ_DECL(pj_status_t) pjconfinfo_parse_confinfo_elem(pj_pool_t *pool, pjconfinfo_xml_node_conf *confinfo_root_element, pjsip_conf_type *conf_info);
 
 PJ_DECL(pj_status_t) pjconfinfo_parse_execution_type(pj_pool_t *pool, pj_xml_node *p_node, pjsip_conf_execution_type *p_type);
@@ -578,7 +543,6 @@ PJ_DECL(pj_status_t) pjconfinfo_parse_endpoint_type(pj_pool_t *pool, pj_xml_node
 PJ_DECL(pj_status_t) pjconfinfo_parse_user_type(pj_pool_t *pool, pj_xml_node *p_node, pjsip_conf_user *p_type);
 PJ_DECL(pj_status_t) pjconfinfo_parse_users_type(pj_pool_t *pool, pj_xml_node *p_node, pjsip_conf_users_type *p_type);
 
-// nugucall - conference-info simple
 PJ_DECL(pj_status_t) pjconfinfo_parse_status_type(pj_pool_t *pool, pj_xml_node *p_node, pjsip_conf_status_type *conf_status_type);
 
 /******************************************************************************

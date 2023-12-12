@@ -3866,6 +3866,11 @@ typedef struct pjsua_acc_config
     pjsip_hdr       reg_hdr_list;
 
     /**
+     * The optional custom SIP headers to be put in the All Tx
+     * request and response.
+     */
+    pjsip_hdr	    default_custom_hdr_list;
+    /**
      * Additional parameters that will be appended in the Contact header
      * for this account. This will only affect REGISTER requests and
      * will be appended after \a contact_params;
@@ -5256,7 +5261,9 @@ typedef struct pjsua_call_info
     pj_str_t            local_contact;
 
     /** Remote URI */
-    pj_str_t            remote_info;
+    pj_str_t		remote_info;
+    pj_str_t        remote_info_Display;
+    pj_str_t        remote_info_User;
 
     /** Remote contact */
     pj_str_t            remote_contact;
@@ -5264,7 +5271,18 @@ typedef struct pjsua_call_info
     pj_bool_t       remote_isfocus;
 
     /** Dialog Call-ID string. */
-    pj_str_t            call_id;
+    pj_str_t		call_id;
+
+	pj_str_t        toheader;
+    pj_str_t        sktnumpidheader;
+    pj_str_t        tphone;
+    pj_str_t        reason;
+	pj_str_t        xtype;
+	pj_str_t        passertedid;
+    pj_str_t        paidDisplay;
+    pj_str_t        paidUser;
+	pj_str_t        xinfo;
+	pj_str_t        xdid;
 
     /** Call setting */
     pjsua_call_setting  setting;
@@ -5335,12 +5353,24 @@ typedef struct pjsua_call_info
 
     /** Internal */
     struct {
-        char    local_info[PJSIP_MAX_URL_SIZE];
-        char    local_contact[PJSIP_MAX_URL_SIZE];
-        char    remote_info[PJSIP_MAX_URL_SIZE];
-        char    remote_contact[PJSIP_MAX_URL_SIZE];
-        char    call_id[128];
-        char    last_status_text[128];
+	char	local_info[PJSIP_MAX_URL_SIZE];
+	char	local_contact[PJSIP_MAX_URL_SIZE];
+	char	remote_info[PJSIP_MAX_URL_SIZE];
+    char    remote_info_Display[512];
+    char    remote_info_User[128];
+	char	remote_contact[PJSIP_MAX_URL_SIZE];
+	char	call_id[128];
+	char    toheader[128];
+    char    sktnumpidheader[1024];
+    char    tphone[128];
+    char    reason[128];
+	char    xtype[128];
+	char    passertedid[1024];
+    char    paidDisplay[512];
+    char    paidUser[128];
+	char    xinfo[128];
+	char    xdid[128];
+	char	last_status_text[128];
     } buf_;
 
 } pjsua_call_info;

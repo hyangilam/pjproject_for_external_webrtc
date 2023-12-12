@@ -170,6 +170,11 @@ static pjsip_hdr*   parse_hdr_accept( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_allow( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_allow_events( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_call_id( pjsip_parse_ctx *ctx);
+static pjsip_hdr*   parse_hdr_reason( pjsip_parse_ctx *ctx);
+static pjsip_hdr*   parse_hdr_xtype( pjsip_parse_ctx *ctx);
+static pjsip_hdr*   parse_hdr_passertedid( pjsip_parse_ctx *ctx);
+static pjsip_hdr*   parse_hdr_xinfo( pjsip_parse_ctx *ctx);
+static pjsip_hdr*   parse_hdr_xdid( pjsip_parse_ctx *ctx);
 static pjsip_hdr*   parse_hdr_contact( pjsip_parse_ctx *ctx);
 static pjsip_hdr*   parse_hdr_content_len( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_content_type( pjsip_parse_ctx *ctx );
@@ -184,6 +189,7 @@ static pjsip_hdr*   parse_hdr_require( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_retry_after( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_supported( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_to( pjsip_parse_ctx *ctx );
+static pjsip_hdr*   parse_hdr_sktnumpid( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_unsupported( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_via( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_generic_string( pjsip_parse_ctx *ctx);
@@ -514,6 +520,16 @@ static pj_status_t init_parser()
                                         &parse_hdr_min_expires);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
+    status = pjsip_register_hdr_parser( "Reason", NULL, &parse_hdr_reason);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+    status = pjsip_register_hdr_parser( "X-type", NULL, &parse_hdr_xtype);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+    status = pjsip_register_hdr_parser( "P-Asserted-Identity", NULL, &parse_hdr_passertedid);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+    status = pjsip_register_hdr_parser( "X-info", NULL, &parse_hdr_xinfo);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+    status = pjsip_register_hdr_parser( "X-did", NULL, &parse_hdr_xdid);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     status = pjsip_register_hdr_parser( "Record-Route", NULL, &parse_hdr_rr);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
@@ -532,6 +548,8 @@ static pj_status_t init_parser()
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( "To", "t", &parse_hdr_to);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+    status = pjsip_register_hdr_parser( "P-SKT-NUMP-ID", NULL, &parse_hdr_sktnumpid);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( "Unsupported", NULL, 
@@ -1182,6 +1200,9 @@ parse_headers:
             else
                 err_info->hname.slen = 0;
             
+        	if(err_info->hname.slen==6 && (!strncmp(err_info->hname.ptr, "Reason", err_info->hname.slen)))
+           		PJ_LOG(3,(THIS_FILE, "reason field empty, do not add Reason field syntax error to err_list"));
+        	else
             pj_list_insert_before(err_list, err_info);
         }
         
@@ -2077,6 +2098,30 @@ static void parse_hdr_fromto( pj_scanner *scanner,
     parse_hdr_end(scanner);
 }
 
+/* Parse P-Asserted-Identity(PAID) header. */
+static void parse_hdr_paid( pj_scanner *scanner, 
+			      pj_pool_t *pool, 
+			      pjsip_passertedid_hdr *hdr)
+{
+    hdr->uri = int_parse_uri_or_name_addr(scanner, pool, 
+					  PJSIP_PARSE_URI_AS_NAMEADDR |
+					  PJSIP_PARSE_URI_IN_FROM_TO_HDR);
+
+    while ( *scanner->curptr == ';' ) {
+        pj_str_t pname, pvalue;
+
+        int_parse_param( scanner, pool, &pname, &pvalue, 0);
+
+        pjsip_param *p = PJ_POOL_ALLOC_T(pool, pjsip_param);
+        p->name = pname;
+        p->value = pvalue;
+        pj_list_insert_before(&hdr->other_param, p);
+
+    }
+
+    parse_hdr_end(scanner);
+}
+
 /* Parse From: header. */
 static pjsip_hdr* parse_hdr_from( pjsip_parse_ctx *ctx )
 {
@@ -2173,6 +2218,40 @@ static pjsip_hdr* parse_hdr_to( pjsip_parse_ctx *ctx )
     return (pjsip_hdr*)hdr;
 }
 
+/* Parse SKT-NUMP-ID header. */
+static void parse_hdr_skt_nump_id( pj_scanner *scanner, 
+			      pj_pool_t *pool, 
+			      pjsip_sktnumpid_hdr *hdr)
+{
+    hdr->uri = int_parse_uri_or_name_addr(scanner, pool, 
+					  PJSIP_PARSE_URI_AS_NAMEADDR |
+					  PJSIP_PARSE_URI_IN_FROM_TO_HDR);
+
+    while ( *scanner->curptr == ';' ) {
+        pj_str_t pname, pvalue;
+
+        int_parse_param( scanner, pool, &pname, &pvalue, 0);
+
+        pjsip_param *p = PJ_POOL_ALLOC_T(pool, pjsip_param);
+        p->name = pname;
+        p->value = pvalue;
+        pj_list_insert_before(&hdr->other_param, p);
+    }
+
+    parse_hdr_end(scanner);
+}
+
+static pjsip_hdr* parse_hdr_sktnumpid( pjsip_parse_ctx *ctx )
+{
+    pjsip_sktnumpid_hdr *hdr = pjsip_sktnumpid_hdr_create(ctx->pool);
+    parse_hdr_skt_nump_id(ctx->scanner, ctx->pool, hdr);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.sktnumpid = hdr;
+
+    return (pjsip_hdr*)hdr;
+}
+
 /* Parse Unsupported: header. */
 static pjsip_hdr* parse_hdr_unsupported(pjsip_parse_ctx *ctx)
 {
@@ -2257,6 +2336,96 @@ static pjsip_hdr* parse_hdr_min_expires(pjsip_parse_ctx *ctx)
     return (pjsip_hdr*)hdr;
 }
 
+static pjsip_hdr* parse_hdr_tphone(pjsip_parse_ctx *ctx)
+{
+    pjsip_tphone_hdr *hdr = pjsip_tphone_hdr_create(ctx->pool);
+    pj_scan_get( ctx->scanner, &pconst.pjsip_NOT_NEWLINE, &hdr->tphone);
+    parse_hdr_end(ctx->scanner);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.tphone = hdr;
+
+    return (pjsip_hdr*)hdr;
+}
+
+
+/* Parse Reason header. */
+static pjsip_hdr* parse_hdr_reason(pjsip_parse_ctx *ctx)
+{
+    pjsip_reason_hdr *hdr = pjsip_reason_hdr_create(ctx->pool);
+    pj_scan_get( ctx->scanner, &pconst.pjsip_NOT_NEWLINE, &hdr->reason);
+    parse_hdr_end(ctx->scanner);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.reason = hdr;
+
+    return (pjsip_hdr*)hdr;
+}
+
+/* Parse Xtype header. */
+static pjsip_hdr* parse_hdr_xtype(pjsip_parse_ctx *ctx)
+{
+    pjsip_xtype_hdr *hdr = pjsip_xtype_hdr_create(ctx->pool);
+    pj_scan_get( ctx->scanner, &pconst.pjsip_NOT_NEWLINE, &hdr->xtype);
+    parse_hdr_end(ctx->scanner);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.xtype = hdr;
+
+    return (pjsip_hdr*)hdr;
+}
+
+/* Parse PAssertedID header. */
+static pjsip_hdr* parse_hdr_passertedid(pjsip_parse_ctx *ctx)
+{
+    pjsip_passertedid_hdr *hdr = pjsip_passertedid_hdr_create(ctx->pool);
+
+    pj_scan_state saveState;
+    pj_scan_save_state(ctx->scanner, &saveState);
+
+    parse_hdr_paid(ctx->scanner, ctx->pool, hdr);
+
+    pj_scan_restore_state(ctx->scanner, &saveState);
+    
+    pj_scan_get( ctx->scanner, &pconst.pjsip_NOT_NEWLINE, &hdr->passertedid);
+    parse_hdr_end(ctx->scanner);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.passertedid = hdr;
+
+    // e.g. pjsip_uri -> pjsip_name_addr
+    pjsip_name_addr* paid_name_addr = (pjsip_name_addr*)hdr->uri;
+
+    // e.g. pjsip_uri -> pjsip_sip_uri
+    pjsip_sip_uri* paid_uri = (pjsip_sip_uri*)paid_name_addr->uri;
+    return (pjsip_hdr*)hdr;
+}
+
+/* Parse Xinfo header. */
+static pjsip_hdr* parse_hdr_xinfo(pjsip_parse_ctx *ctx)
+{
+    pjsip_xinfo_hdr *hdr = pjsip_xinfo_hdr_create(ctx->pool);
+    pj_scan_get( ctx->scanner, &pconst.pjsip_NOT_NEWLINE, &hdr->xinfo);
+    parse_hdr_end(ctx->scanner);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.xinfo = hdr;
+
+    return (pjsip_hdr*)hdr;
+}
+
+/* Parse Xdid header. */
+static pjsip_hdr* parse_hdr_xdid(pjsip_parse_ctx *ctx)
+{
+    pjsip_xdid_hdr *hdr = pjsip_xdid_hdr_create(ctx->pool);
+    pj_scan_get( ctx->scanner, &pconst.pjsip_NOT_NEWLINE, &hdr->xdid);
+    parse_hdr_end(ctx->scanner);
+
+    if (ctx->rdata)
+        ctx->rdata->msg_info.xdid = hdr;
+
+    return (pjsip_hdr*)hdr;
+}
 
 /* Parse Route: or Record-Route: header. */
 static void parse_hdr_rr_route( pj_scanner *scanner, pj_pool_t *pool,

@@ -75,6 +75,8 @@ PJ_BEGIN_DECL
  */
 typedef struct pjsip_dlg_party
 {
+    pjsip_passertedid_hdr *paid;
+    pjsip_sktnumpid_hdr *sktnumpid;
     pjsip_fromto_hdr    *info;      /**< From/To header, inc tag.       */
     pj_str_t             info_str;  /**< String rep of info header.     */
     pj_uint32_t          tag_hval;  /**< Hashed value of the tag.       */
@@ -162,7 +164,16 @@ struct pjsip_dialog
     pj_bool_t           add_allow;  /**< Add Allow header in requests?      */
     pj_bool_t			add_allow_events;  /**< Add Allow-Events header in requests?	    */
     pj_bool_t           ack_sent;   /**< ACK has been sent?                 */
-    pjsip_cid_hdr      *call_id;    /**< Call-ID header.                    */
+    pjsip_cid_hdr      	*call_id;    /**< Call-ID header.                    */
+	pjsip_to_hdr    	*toheader;
+    pjsip_sktnumpid_hdr    *sktnumpidheader;
+
+    pjsip_tphone_hdr *tphone;
+    pjsip_reason_hdr    *reason;
+	pjsip_xtype_hdr    *xtype;
+	pjsip_passertedid_hdr    *passertedid;
+	pjsip_xinfo_hdr    *xinfo;
+	pjsip_xdid_hdr    *xdid;
     pjsip_route_hdr     route_set;  /**< Route set.                         */
     pj_bool_t           route_set_frozen; /**< Route set has been set.      */
     pjsip_auth_clt_sess auth_sess;  /**< Client authentication session.     */

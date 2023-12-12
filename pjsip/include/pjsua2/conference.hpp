@@ -19,7 +19,6 @@
 #ifndef __PJSUA2_CONFERENCE_HPP__
 #define __PJSUA2_CONFERENCE_HPP__
 
-// nugucall - conference
 
 /**
  * @file pjsua2/conference.hpp
@@ -190,25 +189,12 @@ struct ConferenceInfo
     // ConferenceStatus	 confStatus;
     // const pjsip_conf_type*    pInfo;
     bool            infoUpdated;
-#if 0 // nugucall - conference-info simple    
-    unsigned int    conf_info_version;
-    string          conf_info_entity;
-    string          conf_desc_display_text;
-    unsigned int    conf_state_user_count;
-    bool            conf_state_active;
-
-    std::vector<ConferenceUser> conf_users;
-#else
     unsigned int    connectedUserCount;
     unsigned int    totalUserCount;
     string          event;
     string          conferenceId;
     string          causedby;
-#endif
 
-
-
-    
 public:
     /** Import from pjsip structure */
     void fromPj(const pjsua_conference_info &pbi);

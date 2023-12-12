@@ -24,7 +24,6 @@
 #include <pj/assert.h>
 #include <pj/log.h>
 
-// nugucall - conference
 #define THIS_FILE   "conference_info"
 
 struct pjconfinfo_op_desc pjconfinfo_op = 
@@ -442,7 +441,6 @@ static const pj_str_t STR_XPIDF_XML	    = { "xpidf+xml", 9};
 static const pj_str_t STR_APP_PIDF_XML	    = { "application/pidf+xml", 20 };
 static const pj_str_t STR_APP_XPIDF_XML    = { "application/xpidf+xml", 21 };
 
-// nugucall - conference-info simple
 static const pj_str_t STR_CONF3_STATUS	        = { "status", 6};
 static const pj_str_t STR_CONF3_CONNECTED	    = { "connected", 9};
 static const pj_str_t STR_CONF3_TOTAL	        = { "total", 5};
@@ -1128,87 +1126,6 @@ out:
     return status;        
 }
 
-#if 0 // nugucall - conference-info simple
-PJ_DECL(pj_status_t) pjconfinfo_parse_confinfo_attr(pj_pool_t *pool, pjconfinfo_xml_node_conf *confinfo_root_element, pjsip_conf_type *conf_info)
-{
-    pj_status_t status = PJ_SUCCESS;
-    pj_xml_attr* cur_attr = confinfo_root_element->attr_head.next;
-
-    while(cur_attr != &confinfo_root_element->attr_head) {
-        
-        if(!pj_strcmp((const pj_str_t *)&cur_attr->name, &STR_VERSION)) {
-            // optional
-            conf_info->flag |= CONF_INFO_ATTR_VERSION;
-            conf_info->version = pj_strtoul(&cur_attr->value);
-
-        } else if(!pj_strcmp((const pj_str_t *)&cur_attr->name, &STR_STATE)) {
-            // optional
-            conf_info->flag |= CONF_INFO_ATTR_STATE;
-            if( !pj_strcmp(&cur_attr->value, &STR_STATE_FULL)) {
-                conf_info->state = PJSIP_CONF_STATE_FULL;
-            } else if( !pj_strcmp(&cur_attr->value, &STR_STATE_PARTIAL)) {
-                conf_info->state = PJSIP_CONF_STATE_PARTIAL;
-            } else if( !pj_strcmp(&cur_attr->value, &STR_STATE_DELETED)) {
-                conf_info->state = PJSIP_CONF_STATE_DELETED;
-            } else {
-                status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
-                goto out;
-            }
-            
-        } else if(!pj_strcmp((const pj_str_t *)&cur_attr->name, &STR_ENTITY)){
-            // required
-            conf_info->flag |= CONF_INFO_ATTR_ENTITY;
-            pj_strdup(pool,&conf_info->entity, &cur_attr->value);
-        }
-
-        cur_attr = cur_attr->next;
-    }
-
-    if( !(conf_info->flag & CONF_INFO_ATTR_VERSION)) {
-        PJ_LOG(5, (THIS_FILE, 
-                    "conference-info attr version does not exist."));
-                    
-        status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
-        goto out;
-    }
-
-    if( !(conf_info->flag & CONF_INFO_ATTR_ENTITY)) {
-        PJ_LOG(5, (THIS_FILE, 
-                    "conference-info attr entity does not exist."));
-
-        status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
-        goto out;
-    }
-    
-    /* rfc 4575
-        The 'state' attribute value indicates whether the reported
-    information about the element is "full" or "partial", or whether the
-    element has been "deleted" from the conference state document.  The
-    default value of any 'state' attribute is "full".
-
-    A 'state' attribute of a child element in the document MUST be
-    consistent with its parent 'state'.  This means that if the parent's
-    'state' is "full", the state of its children MUST be "full".  If the
-    parent's 'state' is "partial", the state of its children MAY be
-    either "partial", "full", or "deleted".  A parent element with
-    "deleted" 'state' SHOULD NOT contain child elements.  Any information
-    provided for child elements of a "deleted" parent MUST be ignored by
-    the package subscriber.
-    */
-
-    if( !(conf_info->flag & CONF_INFO_ATTR_STATE)) {
-        PJ_LOG(5, (THIS_FILE, 
-                    "conference-info attr state does not exist. set it to full as default value"));
-        conf_info->state = PJSIP_CONF_STATE_FULL;
-    }
-
-    
-    pj_strdup(pool,&conf_info->name, &confinfo_root_element->name);
-out:
-    return status;
-}
-#endif
-
 PJ_DECL(pj_status_t) pjconfinfo_parse_status_type(pj_pool_t *pool, pj_xml_node *p_node, pjsip_conf_status_type *p_type)
 {
     pj_status_t status = PJ_SUCCESS;
@@ -1259,61 +1176,6 @@ PJ_DECL(pj_status_t) pjconfinfo_parse_confinfo_elem(pj_pool_t *pool, pjconfinfo_
 
     pj_xml_node* cur_sub_elem = confinfo_root_element->node_head.next;
 
-// nugucall - conference-info simple
-#if 0
-    while(cur_sub_elem != &confinfo_root_element->node_head){
-
-        if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_CONF_DESC)) {
-            conf_info->flag |= CONF_INFO_ELEM_CONF_DESC;
-
-            status = pjconfinfo_parse_conf_desc_type( pool, cur_sub_elem, &conf_info->conf_description);
-            if(status != PJ_SUCCESS)
-                goto out;
-
-        } else if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_HOST_INFO)) {
-            conf_info->flag |= CONF_INFO_ELEM_HOST_INFO;
-
-            // TODO
-
-        } else if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_CONF_STATE)) {
-            conf_info->flag |= CONF_INFO_ELEM_CONF_STATE;
-
-            status = pjconfinfo_parse_conf_state_type( pool, cur_sub_elem, &conf_info->conf_state );
-            if(status != PJ_SUCCESS)
-                goto out;
-
-        } else if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_USERS)) {
-            conf_info->flag |= CONF_INFO_ELEM_USERS;
-
-            status = pjconfinfo_parse_users_type( pool, cur_sub_elem, &conf_info->users );
-            if(status != PJ_SUCCESS)
-                goto out;
-
-
-        } else if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_SIDEBARS_BY_REF)) {
-            conf_info->flag |= CONF_INFO_ELEM_SIDEBARS_BY_REF;
-
-            // TODO
-
-        } else if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_SIDEBARS_BY_VAL)) {
-            conf_info->flag |= CONF_INFO_ELEM_SIDEBARS_BY_VAL;
-
-            // TODO
-
-        }
-        cur_sub_elem = cur_sub_elem->next;
-    }
-
-    /*
-        A "full"
-        conference document MUST at least include the
-        <conference-description> and <users> child elements.
-    */
-    if(conf_info->state == PJSIP_CONF_STATE_FULL && (!(conf_info->flag & (CONF_INFO_ELEM_CONF_DESC|CONF_INFO_ELEM_USERS)))){
-        status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
-        goto out;
-    }
-#else
     while(cur_sub_elem != &confinfo_root_element->node_head){
 
         if(!pj_strcmp((const pj_str_t *)&cur_sub_elem->name, &STR_CONF3_STATUS)) {
@@ -1331,7 +1193,6 @@ PJ_DECL(pj_status_t) pjconfinfo_parse_confinfo_elem(pj_pool_t *pool, pjconfinfo_
         status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
         goto out;
     }
-#endif
 out:
     return status;
 }

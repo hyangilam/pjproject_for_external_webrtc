@@ -28,6 +28,7 @@
 #include <pj/log.h>
 #include <pjlib-util/string.h>
 
+struct pjsip_hdr pjsip_default_custom_hdr;
 PJ_DEF_DATA(const pjsip_method) pjsip_invite_method =
         { PJSIP_INVITE_METHOD, { "INVITE",6 }};
 
@@ -125,6 +126,11 @@ const pjsip_hdr_name_info_t pjsip_hdr_names[] =
     { "Proxy-Authenticate", 18, NULL },   // PJSIP_H_PROXY_AUTHENTICATE,
     { "Proxy-Authorization",19, NULL },   // PJSIP_H_PROXY_AUTHORIZATION,
     { "Proxy-Require",      13, NULL },   // PJSIP_H_PROXY_REQUIRE,
+    { "Reason",          6, NULL },   		// PJSIP_H_REASON,
+	{ "X-type",          6, NULL },   		// PJSIP_H_XTYPE,
+	{ "P-Asserted-Identity",          19, NULL },   // PJSIP_H_PASSERTEDID,
+	{ "X-info",          6, NULL },   		// PJSIP_H_XINFO,
+	{ "X-did",          5, NULL },   		// PJSIP_H_XDID,
     { "Record-Route",       12, NULL },   // PJSIP_H_RECORD_ROUTE,
     { "Reply-To",            8, NULL },   // PJSIP_H_REPLY_TO,
     { "Require",             7, NULL },   // PJSIP_H_REQUIRE,
@@ -135,12 +141,14 @@ const pjsip_hdr_name_info_t pjsip_hdr_names[] =
     { "Supported",           9, "k" },    // PJSIP_H_SUPPORTED,
     { "Timestamp",           9, NULL },   // PJSIP_H_TIMESTAMP,
     { "To",                  2, "t" },    // PJSIP_H_TO,
+    { "P-SKT-NUMP-ID",		13, NULL },    // PJSIP_H_SKTNUMPID,
     { "Unsupported",        11, NULL },   // PJSIP_H_UNSUPPORTED,
     { "User-Agent",         10, NULL },   // PJSIP_H_USER_AGENT,
     { "Via",                 3, "v" },    // PJSIP_H_VIA,
     { "Warning",             7, NULL },   // PJSIP_H_WARNING,
     { "WWW-Authenticate",   16, NULL },   // PJSIP_H_WWW_AUTHENTICATE,
-	{ "Allow-Events",       12, NULL },   // PJSIP_H_ALLOW_EVENTS
+    { "Allow-Events",       12, NULL }, // PJSIP_H_ALLOW_EVENTS
+    { "P-SKT-Tphone",       12, NULL }, // PJSIP_H_P_SKT_TPHONE
 
     { "_Unknown-Header",    15, NULL },   // PJSIP_H_OTHER,
 };
@@ -1091,6 +1099,106 @@ PJ_DEF(pjsip_cid_hdr*) pjsip_cid_hdr_create( pj_pool_t *pool )
     return pjsip_cid_hdr_init(pool, mem);
 }
 
+PJ_DEF(pjsip_tphone_hdr*) pjsip_tphone_hdr_init( pj_pool_t *pool, void *mem )
+{
+    pjsip_tphone_hdr *hdr = (pjsip_tphone_hdr*) mem;
+    PJ_UNUSED_ARG(pool);
+    init_hdr(hdr, PJSIP_H_P_SKT_TPHONE, &generic_hdr_vptr);
+    return hdr;
+}
+
+PJ_DEF(pjsip_tphone_hdr*) pjsip_tphone_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_tphone_hdr));
+    return pjsip_tphone_hdr_init(pool, mem);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Reason header.
+ */
+PJ_DEF(pjsip_reason_hdr*) pjsip_reason_hdr_init( pj_pool_t *pool,
+					   void *mem )
+{
+    pjsip_reason_hdr *hdr = (pjsip_reason_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    init_hdr(hdr, PJSIP_H_REASON, &generic_hdr_vptr);
+    return hdr;
+}
+
+PJ_DEF(pjsip_reason_hdr*) pjsip_reason_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_reason_hdr));
+    return pjsip_reason_hdr_init(pool, mem);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Xtype header.
+ */
+PJ_DEF(pjsip_xtype_hdr*) pjsip_xtype_hdr_init( pj_pool_t *pool,
+					   void *mem )
+{
+    pjsip_xtype_hdr *hdr = (pjsip_xtype_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    init_hdr(hdr, PJSIP_H_XTYPE, &generic_hdr_vptr);
+    return hdr;
+
+}
+
+PJ_DEF(pjsip_xtype_hdr*) pjsip_xtype_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_xtype_hdr));
+    return pjsip_xtype_hdr_init(pool, mem);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Xinfo header.
+ */
+PJ_DEF(pjsip_xinfo_hdr*) pjsip_xinfo_hdr_init( pj_pool_t *pool,
+					   void *mem )
+{
+    pjsip_xinfo_hdr *hdr = (pjsip_xinfo_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    init_hdr(hdr, PJSIP_H_XINFO, &generic_hdr_vptr);
+    return hdr;
+
+}
+
+PJ_DEF(pjsip_xinfo_hdr*) pjsip_xinfo_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_xinfo_hdr));
+    return pjsip_xinfo_hdr_init(pool, mem);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Xdid header.
+ */
+PJ_DEF(pjsip_xdid_hdr*) pjsip_xdid_hdr_init( pj_pool_t *pool,
+					   void *mem )
+{
+    pjsip_xdid_hdr *hdr = (pjsip_xdid_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    init_hdr(hdr, PJSIP_H_XDID, &generic_hdr_vptr);
+    return hdr;
+
+}
+
+PJ_DEF(pjsip_xdid_hdr*) pjsip_xdid_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_xdid_hdr));
+    return pjsip_xdid_hdr_init(pool, mem);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -1650,6 +1758,206 @@ pjsip_fromto_hdr_shallow_clone( pj_pool_t *pool,
     pjsip_param_shallow_clone( pool, &hdr->other_param, &rhs->other_param);
     return hdr;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * SKT-NUMP-ID header.
+ */
+
+static int pjsip_sktnumpid_hdr_print( pjsip_sktnumpid_hdr *hdr, 
+				   char *buf, pj_size_t size);
+static pjsip_sktnumpid_hdr* pjsip_sktnumpid_hdr_clone( pj_pool_t *pool, 
+					         const pjsip_sktnumpid_hdr *hdr);
+static pjsip_sktnumpid_hdr* pjsip_sktnumpid_hdr_shallow_clone( pj_pool_t *pool,
+							 const pjsip_sktnumpid_hdr *hdr);
+
+static pjsip_hdr_vptr sktnumpid_hdr_vptr = 
+{
+    (pjsip_hdr_clone_fptr) &pjsip_sktnumpid_hdr_clone,
+    (pjsip_hdr_clone_fptr) &pjsip_sktnumpid_hdr_shallow_clone,
+    (pjsip_hdr_print_fptr) &pjsip_sktnumpid_hdr_print,
+};
+
+PJ_DEF(pjsip_sktnumpid_hdr*) pjsip_sktnumpid_hdr_init( pj_pool_t *pool,
+					 void *mem )
+{
+    pjsip_sktnumpid_hdr *hdr = (pjsip_sktnumpid_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    pj_bzero(mem, sizeof(pjsip_sktnumpid_hdr));
+    init_hdr(hdr, PJSIP_H_SKTNUMPID, &sktnumpid_hdr_vptr);
+    pj_list_init(&hdr->other_param);
+    return hdr;
+}
+
+PJ_DEF(pjsip_sktnumpid_hdr*) pjsip_sktnumpid_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_sktnumpid_hdr));
+    return pjsip_sktnumpid_hdr_init(pool, mem);
+}
+
+static int pjsip_sktnumpid_hdr_print( pjsip_sktnumpid_hdr *hdr, 
+				   char *buf, pj_size_t size)
+{
+    pj_ssize_t printed;
+    char *startbuf = buf;
+    char *endbuf = buf + size;
+    const pj_str_t *hname = pjsip_cfg()->endpt.use_compact_form? 
+			    &hdr->sname : &hdr->name;
+    const pjsip_parser_const_t *pc = pjsip_parser_const();
+
+    copy_advance(buf, (*hname));
+    *buf++ = ':';
+    *buf++ = ' ';
+
+    printed = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, hdr->uri, 
+			      buf, endbuf-buf);
+    if (printed < 1)
+	return -1;
+
+    buf += printed;
+
+    printed = pjsip_param_print_on(&hdr->other_param, buf, endbuf-buf, 
+				   &pc->pjsip_TOKEN_SPEC,
+				   &pc->pjsip_TOKEN_SPEC, ';');
+    if (printed < 0)
+	return -1;
+    buf += printed;
+
+    return (int)(buf-startbuf);
+}
+
+static pjsip_sktnumpid_hdr* pjsip_sktnumpid_hdr_clone( pj_pool_t *pool, 
+					         const pjsip_sktnumpid_hdr *rhs)
+{
+    pjsip_sktnumpid_hdr *hdr = pjsip_sktnumpid_hdr_create(pool);
+
+    hdr->type = rhs->type;
+    hdr->name = rhs->name;
+    hdr->sname = rhs->sname;
+    
+    hdr->sktnumpid = rhs->sktnumpid;
+    hdr->uri = (pjsip_uri*) pjsip_uri_clone(pool, rhs->uri);
+    pjsip_param_clone( pool, &hdr->other_param, &rhs->other_param);
+
+    return hdr;
+}
+
+static pjsip_sktnumpid_hdr* 
+pjsip_sktnumpid_hdr_shallow_clone( pj_pool_t *pool,
+				const pjsip_sktnumpid_hdr *rhs)
+{
+    pjsip_sktnumpid_hdr *hdr = PJ_POOL_ALLOC_T(pool, pjsip_sktnumpid_hdr);
+    pj_memcpy(hdr, rhs, sizeof(*hdr));
+    pjsip_param_shallow_clone( pool, &hdr->other_param, &rhs->other_param);
+    return hdr;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * P-Assserted-Identity (PAID) header.
+ */
+
+static int pjsip_paid_hdr_print( pjsip_passertedid_hdr *hdr, 
+				   char *buf, pj_size_t size);
+static pjsip_passertedid_hdr* pjsip_paid_hdr_clone( pj_pool_t *pool, 
+					         const pjsip_passertedid_hdr *hdr);
+static pjsip_passertedid_hdr* pjsip_paid_hdr_shallow_clone( pj_pool_t *pool,
+							 const pjsip_passertedid_hdr *hdr);
+
+
+static pjsip_hdr_vptr paid_hdr_vptr = 
+{
+    (pjsip_hdr_clone_fptr) &pjsip_paid_hdr_clone,
+    (pjsip_hdr_clone_fptr) &pjsip_paid_hdr_shallow_clone,
+    (pjsip_hdr_print_fptr) &pjsip_paid_hdr_print,
+};
+
+
+PJ_DEF(pjsip_passertedid_hdr*) pjsip_passertedid_hdr_init( pj_pool_t *pool,
+					   void *mem )
+{
+    pjsip_passertedid_hdr *hdr = (pjsip_passertedid_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    pj_bzero(mem, sizeof(pjsip_passertedid_hdr));
+    init_hdr(hdr, PJSIP_H_PASSERTEDID, &paid_hdr_vptr);
+    pj_list_init(&hdr->other_param);
+    return hdr;
+
+}
+
+PJ_DEF(pjsip_passertedid_hdr*) pjsip_passertedid_hdr_create( pj_pool_t *pool )
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_passertedid_hdr));
+    return pjsip_passertedid_hdr_init(pool, mem);
+}
+
+static int pjsip_paid_hdr_print( pjsip_passertedid_hdr *hdr, 
+				   char *buf, pj_size_t size)
+{
+    pj_ssize_t printed;
+    char *startbuf = buf;
+    char *endbuf = buf + size;
+    const pj_str_t *hname = pjsip_cfg()->endpt.use_compact_form? 
+			    &hdr->sname : &hdr->name;
+    const pjsip_parser_const_t *pc = pjsip_parser_const();
+
+    copy_advance(buf, (*hname));
+    *buf++ = ':';
+    *buf++ = ' ';
+
+    //  PJSIP_URI_IN_FROMTO_HDR ????
+    printed = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, hdr->uri, 
+			      buf, endbuf-buf);
+    if (printed < 1)
+	return -1;
+
+    buf += printed;
+
+    // copy_advance_pair_escape(buf, ";tag=", 5, hdr->tag,
+	// 		     pc->pjsip_TOKEN_SPEC);
+
+    printed = pjsip_param_print_on(&hdr->other_param, buf, endbuf-buf, 
+				   &pc->pjsip_TOKEN_SPEC,
+				   &pc->pjsip_TOKEN_SPEC, ';');
+    if (printed < 0)
+	return -1;
+    buf += printed;
+
+    return (int)(buf-startbuf);
+}
+
+static pjsip_passertedid_hdr* pjsip_paid_hdr_clone( pj_pool_t *pool, 
+					         const pjsip_passertedid_hdr *rhs)
+{
+    pjsip_passertedid_hdr *hdr = pjsip_passertedid_hdr_create(pool);
+
+    hdr->type = rhs->type;
+    hdr->name = rhs->name;
+    hdr->sname = rhs->sname;
+    
+    hdr->passertedid = rhs->passertedid;
+    hdr->uri = (pjsip_uri*) pjsip_uri_clone(pool, rhs->uri);
+    // pj_strdup( pool, &hdr->tag, &rhs->tag);
+    pjsip_param_clone( pool, &hdr->other_param, &rhs->other_param);
+
+    return hdr;
+}
+
+static pjsip_passertedid_hdr* 
+pjsip_paid_hdr_shallow_clone( pj_pool_t *pool,
+				const pjsip_passertedid_hdr *rhs)
+{
+    pjsip_passertedid_hdr *hdr = PJ_POOL_ALLOC_T(pool, pjsip_passertedid_hdr);
+    pj_memcpy(hdr, rhs, sizeof(*hdr));
+    pjsip_param_shallow_clone( pool, &hdr->other_param, &rhs->other_param);
+    return hdr;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

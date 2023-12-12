@@ -20,10 +20,7 @@
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
 
-// nugucall - conference
-
 #define THIS_FILE   "pjsua_conf.c"
-
 
 static void subscribe_conference_info(pjsua_conference_id conference_id);
 static void unsubscribe_conference_info(pjsua_conference_id conference_id);
@@ -1915,7 +1912,6 @@ static void subscribe_conference_info(pjsua_conference_id conference_id)
     /* Set authentication preference */
     pjsip_auth_clt_set_prefs(&conference->dlg->auth_sess, &acc->cfg.auth_pref);
 
-    // nugucall - conference
     pjsip_evsub_add_header(conference->sub, &acc->cfg.conf_sub_hdr_list);
     pjsip_evsub_set_mod_data(conference->sub, pjsua_var.mod.id, conference);
 

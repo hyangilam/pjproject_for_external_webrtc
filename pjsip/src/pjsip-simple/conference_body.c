@@ -27,20 +27,10 @@
 #include <pj/pool.h>
 #include <pj/string.h>
 
-
-// nugucall - conference
-
 #define THIS_FILE   "conference_body.c"
-
 
 static const pj_str_t STR_APPLICATION = { "application", 11 };
 static const pj_str_t STR_CONF_INFO_XML =	{ "conference-info+xml", 19 };
-
-//
-// static const pj_str_t STR_
-// static const pj_str_t STR_PIDF_XML =	{ "pidf+xml", 8 };
-// static const pj_str_t STR_XPIDF_XML =	{ "xpidf+xml", 9 };
-
 
 /*
  * Function to print XML message body.
@@ -221,177 +211,14 @@ PJ_DEF(pj_status_t) pjsip_conf_parse_confinfo2(char *body, unsigned body_len,
 	pj_status_t status = PJ_SUCCESS;
     pjconfinfo_xml_node_conf *confinfo_root_element;			// xml node
 
-// nugucall - conference-info simple
-#if 0
-	g_conf_info_var._nReceived++;
-	PJ_LOG(5,(THIS_FILE, "conference-info nReceived: %d", g_conf_info_var._nReceived));
-
     confinfo_root_element = pjconfinfo_parse(pool, body, body_len);
     if (confinfo_root_element == NULL){
 		status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
 		goto out;
 	}
-	
-	status = pjconfinfo_parse_confinfo_attr(pool, confinfo_root_element, conf_info);
-	if(status != PJ_SUCCESS)
-		goto out;
-
-
-	if(g_conf_info_var._nReceived == 1) {
-		if(conf_info->state != PJSIP_CONF_STATE_FULL) {
-			PJ_LOG(5,(THIS_FILE, "First conference-info is not full state"));
-			status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
-			goto out;
-		}
-		g_conf_info_var.version = conf_info->version;
-	}
-	else if(g_conf_info_var._nReceived > 1) {
-		/*
-		Each time a new NOTIFY is received, the value of the local version
-		number and the value of the 'version' attribute in the new received
-		document are compared.  If the value in the document is equal to or
-		less than the local version, the document is discarded without
-		processing.
-		*/
-		if(conf_info->version - g_conf_info_var.version <= 0) {
-			PJ_LOG(5, (THIS_FILE, 
-			"new received version[%d], local version[%d] this conference-info discarded", 
-			conf_info->version, g_conf_info_var.version));
-			status = PJSIP_SIMPLE_EBADCONFERENCEINFOVERSION;
-			goto out;
-		}
-	}
-
-	if(conf_info->state == PJSIP_CONF_STATE_DELETED) {
-		/*
-			A parent element with
-			"deleted" 'state' SHOULD NOT contain child elements.  Any information
-			provided for child elements of a "deleted" parent MUST be ignored by
-			the package subscriber. 
-		*/
-		pj_pool_reset(g_conf_info_pool);
-		pj_memset(&g_conf_info_var, 0, sizeof(pjsip_conf_type));
-		g_conf_info_var.version = conf_info->version;
-		/*
-			Otherwise, if the received NOTIFY contains a "full" or "deleted"
-			state, the conference package subscriber MUST set the local 'version'
-			number to the value of the 'version' attribute from the received
-			<conference-info> and replace the local information with the received
-			document.  
-			Receiving "deleted" state for the <conference-info>
-			element means that the conference has ceased to exist and the
-			subscriber SHOULD terminate the subscription by sending the SUBSCRIBE
-			with Expires = 0.
-		*/
-
-		// Do Something
-		
-
-	} else if(conf_info->state == PJSIP_CONF_STATE_PARTIAL) {
-		// If the parent's 'state' is "partial", the state of its children MAY be either "partial", "full", or "deleted". 
-		/*
-			 if
-			the 'version' number in the received document is more than one number
-			higher than the previous local version number, the subscriber MUST
-			generate a subscription refresh request to trigger a full state
-			notification.  If the 'version' number in the document is one higher
-			than the local version number, the local version number is updated
-			accordingly and the document is used to update the local content as
-			described below.
-		*/
-
-		if(conf_info->version - g_conf_info_var.version > 1) {
-			/*
-				the subscriber MUST
-				generate a subscription refresh request to trigger a full state
-				notification.
-			*/
-
-			// call - conf_on_evsub_client_refresh ????
-		} else if(conf_info->version - g_conf_info_var.version == 1) {
-			// Do partial update
-
-		} else if(conf_info->version - g_conf_info_var.version == 0) {
-			/*
-			Note that a partial
-			notification and a subsequent full notification over the same
-			dialog MAY contain the same version number if no change in the
-			conference state occurred in between.
-			*/
-			// same as before
-			goto out;
-
-		} else {
-			// ???
-		}
-
-	} else if(conf_info->state == PJSIP_CONF_STATE_FULL) {
-		// A "full" conference document MUST at least include the <conference-description> and <users> child elements.
-		// if the parent's 'state' is "full", the state of its children MUST be "full".
-
-		pj_memset(&g_conf_info_var, 0, sizeof(pjsip_conf_type));
-
-		/*
-			Otherwise, if the received NOTIFY contains a "full" or "deleted"
-			state, the conference package subscriber MUST set the local 'version'
-			number to the value of the 'version' attribute from the received
-			<conference-info> and replace the local information with the received
-			document.  
-		*/
-		g_conf_info_var.version = conf_info->version;
-
-		status = pjconfinfo_parse_confinfo_elem(pool, confinfo_root_element, conf_info);
-	}
-
-
-
-
-    // conf_status->info_cnt = 0;
-
-    // confinfo_tuple = pjconfinfo_get_first_tuple(confinfo);
-    // while (confinfo_tuple && conf_status->info_cnt < PJSIP_CONF_MAX_INFO) {
-	// pjconfinfo_xml_node_status *confinfo_status;
-
-	// conf_status->info[conf_status->info_cnt].tuple_node = 
-	//     pj_xml_clone(pool, confinfo_tuple);
-
-	// pj_strdup(pool, 
-	// 	  &conf_status->info[conf_status->info_cnt].id,
-	// 	  pjconfinfo_tuple_get_id(confinfo_tuple));
-
-	// pj_strdup(pool, 
-	// 	  &conf_status->info[conf_status->info_cnt].contact,
-	// 	  pjconfinfo_tuple_get_contact(confinfo_tuple));
-
-	// confinfo_status = pjconfinfo_tuple_get_status(confinfo_tuple);
-	// if (confinfo_status) {
-	//     conf_status->info[conf_status->info_cnt].basic_open = 
-	// 	pjconfinfo_status_is_basic_open(confinfo_status);
-	// } else {
-	//     conf_status->info[conf_status->info_cnt].basic_open = PJ_FALSE;
-	// }
-
-	// confinfo_tuple = pjconfinfo_get_next_tuple( confinfo, confinfo_tuple );
-	// conf_status->info_cnt++;
-    // }
-
-    /* Parse <person> (RPID) */
-    // pjrpid_get_element(confinfo, pool, &conf_status->info[0].rpid);
-out:
-    return status;
-#else 
-
-    confinfo_root_element = pjconfinfo_parse(pool, body, body_len);
-    if (confinfo_root_element == NULL){
-		status = PJSIP_SIMPLE_EBADCONFERENCEINFO;
-		goto out;
-	}
-
 	pj_memset(&g_conf_info_var, 0, sizeof(pjsip_conf_type));
 
 	status = pjconfinfo_parse_confinfo_elem(pool, confinfo_root_element, conf_info);
-
 out:
     return status;
-#endif
 }

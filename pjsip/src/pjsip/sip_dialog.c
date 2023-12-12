@@ -44,7 +44,7 @@ pj_bool_t pjsip_include_allow_hdr_in_dlg = PJSIP_INCLUDE_ALLOW_HDR_IN_DLG;
 
 /* Contact header string */
 static const pj_str_t HCONTACT = { "Contact", 7 };
-
+static const pj_str_t HTPHONE = { "P-SKT-Tphone", 12 };
 
 PJ_DEF(pj_bool_t) pjsip_method_creates_dialog(const pjsip_method *m)
 {
@@ -243,7 +243,8 @@ PJ_DEF(pj_status_t) pjsip_dlg_create_uac2(
                         &create_param->local_uri);
     dlg->local.info->uri = pjsip_parse_uri(dlg->pool,
                                            dlg->local.info_str.ptr,
-                                           dlg->local.info_str.slen, 0);
+					    //    dlg->local.info_str.slen, 0);
+                        dlg->local.info_str.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
     if (!dlg->local.info->uri) {
         status = PJSIP_EINVALIDURI;
         goto on_error;
@@ -277,8 +278,9 @@ PJ_DEF(pj_status_t) pjsip_dlg_create_uac2(
     pj_strdup_with_null(dlg->pool, &dlg->remote.info_str,
                         &create_param->remote_uri);
     dlg->remote.info->uri = pjsip_parse_uri(dlg->pool,
-                                            dlg->remote.info_str.ptr,
-                                            dlg->remote.info_str.slen, 0);
+					    dlg->remote.info_str.ptr,
+					    // dlg->remote.info_str.slen, 0);
+                        dlg->remote.info_str.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
     if (!dlg->remote.info->uri) {
         status = PJSIP_EINVALIDURI;
         goto on_error;
@@ -553,7 +555,21 @@ pj_status_t create_uas_dialog( pjsip_user_agent *ua,
                                                    PJSIP_H_RECORD_ROUTE, rr);
     }
     dlg->route_set_frozen = PJ_TRUE;
+  
+  	// to Header field - set dialog header
+    if(rdata->msg_info.to){
+        dlg->toheader = (pjsip_to_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.to);
+	}
+    
+    // SKT-NUMP-ID Header field - set dialog header
+    if(rdata->msg_info.sktnumpid){
+        dlg->sktnumpidheader = (pjsip_sktnumpid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.sktnumpid);
+	}
 
+    // P-Asserted-Identity
+    if(rdata->msg_info.passertedid != NULL)
+        dlg->remote.paid = (pjsip_passertedid_hdr*)pjsip_hdr_clone(dlg->pool, rdata->msg_info.passertedid);
+    
     /* Increment the dialog's lock since tsx may cause the dialog to be
      * destroyed prematurely (such as in case of transport error).
      */
@@ -1731,6 +1747,44 @@ void pjsip_dlg_on_rx_request( pjsip_dialog *dlg, pjsip_rx_data *rdata )
         pj_log_pop_indent();
         return;
     }
+    
+	// to Header field - set dialog header
+    if(rdata->msg_info.to){
+        dlg->toheader = (pjsip_to_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.to);
+	}
+
+	// SKT-NUMP-ID Header field - set dialog header
+    if(rdata->msg_info.sktnumpid){
+        dlg->sktnumpidheader = (pjsip_sktnumpid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.sktnumpid);
+	}
+
+    if(rdata->msg_info.tphone){
+        dlg->tphone = (pjsip_tphone_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.tphone);
+    }
+    // reason
+    if(rdata->msg_info.reason){
+        dlg->reason = (pjsip_reason_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.reason);
+	}
+
+    // Xtype
+    if(rdata->msg_info.xtype){
+        dlg->xtype = (pjsip_xtype_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.xtype);
+	}
+
+	// P-Asserted-Identity
+    if(rdata->msg_info.passertedid){
+        dlg->passertedid = (pjsip_passertedid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.passertedid);
+	}
+
+	// Xinfo
+    if(rdata->msg_info.xinfo){
+        dlg->xinfo = (pjsip_xinfo_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.xinfo);
+	}
+
+	// Xdid
+    if(rdata->msg_info.xdid){
+        dlg->xdid = (pjsip_xdid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.xdid);
+	}
 
     /* Update CSeq. */
     dlg->remote.cseq = rdata->msg_info.cseq->cseq;
@@ -1965,6 +2019,44 @@ void pjsip_dlg_on_rx_response( pjsip_dialog *dlg, pjsip_rx_data *rdata )
 
     /* Keep the response's status code */
     res_code = rdata->msg_info.msg->line.status.code;
+
+    // to Header field - set dialog header
+    if(rdata->msg_info.to){
+        dlg->toheader = (pjsip_to_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.to);
+	}
+
+    // SKT-NUMP-ID Header field - set dialog header
+    if(rdata->msg_info.sktnumpid){
+        dlg->sktnumpidheader = (pjsip_sktnumpid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.sktnumpid);
+	}
+
+    if(rdata->msg_info.tphone){
+        dlg->tphone = (pjsip_tphone_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.tphone);
+    }
+    // reason
+    if(rdata->msg_info.reason){
+        dlg->reason = (pjsip_reason_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.reason);
+	}
+
+    // Xtype
+    if(rdata->msg_info.xtype){
+        dlg->xtype = (pjsip_xtype_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.xtype);
+	}
+
+    // P-Asserted-Identity
+    if(rdata->msg_info.passertedid){
+        dlg->passertedid = (pjsip_passertedid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.passertedid);
+	}
+
+    // Xinfo
+    if(rdata->msg_info.xinfo){
+        dlg->xinfo = (pjsip_xinfo_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.xinfo);
+	}
+
+    // Xdid
+    if(rdata->msg_info.xdid){
+        dlg->xdid = (pjsip_xdid_hdr*) pjsip_hdr_clone(dlg->pool, rdata->msg_info.xdid);
+	}
 
     /* When we receive response that establishes dialog, update To tag,
      * route set and dialog target.

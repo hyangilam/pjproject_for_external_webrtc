@@ -20,8 +20,6 @@
 #include <pjsua2/account.hpp>
 #include "util.hpp"
 
-// nugucall - conference
-
 using namespace pj;
 using namespace std;
 
@@ -78,63 +76,14 @@ void ConferenceInfo::fromPj(const pjsua_conference_info &pbi)
 
     if(pbi.conf_info._is_valid){
         infoUpdated = true;
-#if 0 // nugucall - conference-info simple
-        conf_info_version = pbi.conf_info.version;
-        conf_info_entity = pj2Str(pbi.conf_info.entity);
-        conf_desc_display_text = pj2Str(pbi.conf_info.conf_description.display_text);
-        conf_state_user_count = pbi.conf_info.conf_state.user_count;
-        conf_state_active = pbi.conf_info.conf_state.active;
-
-        if(conf_state_user_count > 0){
-            pjsip_conf_user *cur_user = pbi.conf_info.users.user_list->next;
-            const pjsip_conf_user *user_list_head = pbi.conf_info.users.user_list;
-            while(cur_user != user_list_head)
-            {
-                ConferenceUser user;
-                user.entity = pj2Str(cur_user->user.entity);
-                user.display_text = pj2Str(cur_user->user.display_text);
-
-                pjsip_conf_endpoint *cur_endpoint = cur_user->user.endpoint_list.next;
-                while(cur_endpoint != &cur_user->user.endpoint_list){
-                    ConferenceEndpoint endpoint;
-                    endpoint.entity = pj2Str(cur_endpoint->endpoint.entity);
-                    endpoint.display_text = pj2Str(cur_endpoint->endpoint.display_text);
-                    endpoint.status = cur_endpoint->endpoint.status;
-
-                    pjsip_conf_media *cur_media = cur_endpoint->endpoint.media_list.next;
-                    while(cur_media != &cur_endpoint->endpoint.media_list){
-                        ConferenceMedia media;
-                        media.id = pj2Str(cur_media->media.id);
-                        media.type = pj2Str(cur_media->media.type);
-                        media.src_id = pj2Str(cur_media->media.src_id);
-                        media.status = cur_media->media.status;
-
-                        endpoint.media.push_back(media);
-                        cur_media = cur_media->next;
-                    }
-                    
-                    user.endpoint.push_back(endpoint);
-                    cur_endpoint = cur_endpoint->next;
-                }
-
-                conf_users.push_back(user);
-                cur_user = cur_user->next;
-            }
-
-        }
-#else
         connectedUserCount = pbi.conf_info.status.connected;
         totalUserCount     = pbi.conf_info.status.total;
         event               = pj2Str(pbi.conf_info.status.event);
         conferenceId        = pj2Str(pbi.conf_info.status.conferenceId);
         causedby            = pj2Str(pbi.conf_info.status.causedby);
-#endif
     }
     else {
         infoUpdated = false;
-#if 0 // nugucall - conference-info simple
-        conf_users.clear();
-#endif
     }
         
 }

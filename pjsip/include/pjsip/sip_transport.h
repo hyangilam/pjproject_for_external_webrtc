@@ -403,12 +403,31 @@ struct pjsip_rx_data
         /** The Call-ID header as found in the message. */
         pjsip_cid_hdr           *cid;
 
+        pjsip_tphone_hdr *tphone;
+        /** The Reason header as found in the message. */
+        pjsip_reason_hdr		*reason;
+
+        /** The Xtype header as found in the message. */
+        pjsip_xtype_hdr		*xtype;
+
+        /** The PAssertedID header as found in the message. */
+        pjsip_passertedid_hdr		*passertedid;
+
+        /** The Xinfo header as found in the message. */
+        pjsip_xinfo_hdr		*xinfo;
+
+        /** The Xdid header as found in the message. */
+        pjsip_xdid_hdr		*xdid;
+
         /** The From header as found in the message. */
-        pjsip_from_hdr          *from;
+        pjsip_from_hdr		*from;
 
         /** The To header as found in the message. */
-        pjsip_to_hdr            *to;
+        pjsip_to_hdr		*to;
 
+        /** The SKT-NUMP-ID header as found in the message. */
+        pjsip_sktnumpid_hdr		*sktnumpid;
+	
         /** The topmost Via header as found in the message. */
         pjsip_via_hdr           *via;
 
@@ -661,6 +680,7 @@ struct pjsip_tx_data
      */
     pj_bool_t               auth_retry;
 
+    pj_bool_t           is_cloned;
     /**
      * Arbitrary data attached by PJSIP modules.
      */

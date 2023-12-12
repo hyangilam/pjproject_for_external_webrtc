@@ -233,6 +233,11 @@ typedef enum pjsip_hdr_e
     PJSIP_H_PROXY_AUTHENTICATE,
     PJSIP_H_PROXY_AUTHORIZATION,
     PJSIP_H_PROXY_REQUIRE_UNIMP,        /* N/A, use pjsip_generic_string_hdr */
+    PJSIP_H_REASON,
+	PJSIP_H_XTYPE,
+	PJSIP_H_PASSERTEDID,
+	PJSIP_H_XINFO,
+	PJSIP_H_XDID,
     PJSIP_H_RECORD_ROUTE,
     PJSIP_H_REPLY_TO_UNIMP,             /* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_REQUIRE,
@@ -241,14 +246,16 @@ typedef enum pjsip_hdr_e
     PJSIP_H_SERVER_UNIMP,               /* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_SUBJECT_UNIMP,              /* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_SUPPORTED,
-    PJSIP_H_TIMESTAMP_UNIMP,            /* N/A, use pjsip_generic_string_hdr */
+    PJSIP_H_TIMESTAMP_UNIMP,		/* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_TO,
+    PJSIP_H_SKTNUMPID,
     PJSIP_H_UNSUPPORTED,
     PJSIP_H_USER_AGENT_UNIMP,           /* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_VIA,
     PJSIP_H_WARNING_UNIMP,              /* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_WWW_AUTHENTICATE,
     PJSIP_H_ALLOW_EVENTS,
+    PJSIP_H_P_SKT_TPHONE,
     PJSIP_H_OTHER
 
 } pjsip_hdr_e;
@@ -325,6 +332,7 @@ struct pjsip_hdr
     PJSIP_DECL_HDR_MEMBER(struct pjsip_hdr);
 };
 
+extern struct pjsip_hdr pjsip_default_custom_hdr;
 
 /**
  * This generic function will clone any header, by calling "clone" function
@@ -982,6 +990,18 @@ PJ_INLINE(void) pjsip_msg_add_hdr( pjsip_msg *msg, pjsip_hdr *hdr )
     pj_list_insert_before(&msg->hdr, hdr);
 }
 
+PJ_INLINE(void) pjsip_msg_set_default_custom_hdr(pj_pool_t *pool, pjsip_hdr *hdr_list) {
+    pjsip_default_custom_hdr.next = NULL;
+    pjsip_default_custom_hdr.prev = NULL;
+    pj_list_init(&pjsip_default_custom_hdr);
+    if (hdr_list) {
+        const pjsip_hdr *hdr = hdr_list->next;
+        while (hdr != hdr_list) {
+            pj_list_push_back(&pjsip_default_custom_hdr, pjsip_hdr_clone(pool, hdr));
+            hdr = hdr->next;
+        }
+    }
+}
 /** 
  * Add header field to the message, putting it in the front of the header list.
  *
@@ -1024,6 +1044,57 @@ PJ_DECL(pj_ssize_t) pjsip_msg_print(const pjsip_msg *msg,
 #define PJSIP_MSG_CID_HDR(msg) \
             ((pjsip_cid_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_CALL_ID, NULL))
 
+#define PJSIP_MSG_P_SKT_TPHONE_HDR(msg) \
+	    ((pjsip_tphone_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_P_SKT_TPHONE, NULL))
+
+//---------------------------------------------------------------------------------
+/**
+ * Find Reason header.
+ *
+ * @param msg	The message.
+ * @return	Reason header instance.
+ */
+#define PJSIP_MSG_REASON_HDR(msg) \
+	    ((pjsip_reason_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_REASON, NULL))
+
+/**
+ * Find Xtype header.
+ *
+ * @param msg	The message.
+ * @return	xtype header instance.
+ */
+#define PJSIP_MSG_XTYPE_HDR(msg) \
+	    ((pjsip_xtype_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_XTYPE, NULL))
+
+/**
+ * Find PAssertedID header.
+ *s
+ * @param msg	The message.
+ * @return	PAssertedID header instance.
+ */
+#define PJSIP_MSG_PASSERTEDID_HDR(msg) \
+	    ((pjsip_passertedid_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_PASSERTEDID, NULL))
+
+/**
+ * Find Xinfo header.
+ *
+ * @param msg	The message.
+ * @return	Xinfo header instance.
+ */
+#define PJSIP_MSG_XINFO_HDR(msg) \
+	    ((pjsip_xinfo_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_XINFO, NULL))
+
+/**
+ * Find Xdid header.
+ *
+ * @param msg	The message.
+ * @return	Xdid header instance.
+ */
+#define PJSIP_MSG_XDID_HDR(msg) \
+	    ((pjsip_xdid_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_XDID, NULL))
+
+//---------------------------------------------------------------------------------
+
 /**
  * Find CSeq header.
  *
@@ -1049,7 +1120,16 @@ PJ_DECL(pj_ssize_t) pjsip_msg_print(const pjsip_msg *msg,
  * @return      To header instance.
  */
 #define PJSIP_MSG_TO_HDR(msg) \
-            ((pjsip_to_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_TO, NULL))
+	    ((pjsip_to_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_TO, NULL))
+
+/**
+ * Find SKT-NUMP-ID header.
+ *
+ * @param msg	The message.
+ * @return	SKT-NUMP-ID header instance.
+ */
+#define PJSIP_MSG_SKTNUMPID_HDR(msg) \
+	    ((pjsip_sktnumpid_hdr*)pjsip_msg_find_hdr(msg, PJSIP_H_SKTNUMPID, NULL))
 
 
 /**
@@ -1381,7 +1461,46 @@ PJ_DECL(pjsip_cid_hdr*) pjsip_cid_hdr_create( pj_pool_t *pool );
 PJ_DECL(pjsip_cid_hdr*) pjsip_cid_hdr_init( pj_pool_t *pool,
                                             void *mem );
 
+typedef struct pjsip_tphone_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_tphone_hdr);
+    pj_str_t tphone;	    /**< P-SKT-Tphone */
+} pjsip_tphone_hdr;
 
+PJ_DECL(pjsip_tphone_hdr*) pjsip_tphone_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_tphone_hdr*) pjsip_tphone_hdr_init( pj_pool_t *pool, void *mem );
+
+typedef struct pjsip_reason_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_reason_hdr);
+    pj_str_t reason;	    /**< Reason string. */
+} pjsip_reason_hdr;
+PJ_DECL(pjsip_reason_hdr*) pjsip_reason_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_reason_hdr*) pjsip_reason_hdr_init( pj_pool_t *pool, void *mem );
+
+typedef struct pjsip_xtype_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_xtype_hdr);
+    pj_str_t xtype;	    /**< Xtype string. */
+} pjsip_xtype_hdr;
+PJ_DECL(pjsip_xtype_hdr*) pjsip_xtype_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_xtype_hdr*) pjsip_xtype_hdr_init( pj_pool_t *pool, void *mem );
+
+typedef struct pjsip_xinfo_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_xinfo_hdr);
+    pj_str_t xinfo;	    /**< Xinfo string. */
+} pjsip_xinfo_hdr;
+PJ_DECL(pjsip_xinfo_hdr*) pjsip_xinfo_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_xinfo_hdr*) pjsip_xinfo_hdr_init( pj_pool_t *pool, void *mem );
+
+typedef struct pjsip_xdid_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_xdid_hdr);
+    pj_str_t xdid;	    /**< Xdid string. */
+} pjsip_xdid_hdr;
+PJ_DECL(pjsip_xdid_hdr*) pjsip_xdid_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_xdid_hdr*) pjsip_xdid_hdr_init( pj_pool_t *pool, void *mem );
 
 /* **************************************************************************/
 /**
@@ -1624,6 +1743,9 @@ PJ_DECL(pjsip_from_hdr*) pjsip_from_hdr_create( pj_pool_t *pool );
 PJ_DECL(pjsip_from_hdr*) pjsip_from_hdr_init( pj_pool_t *pool,
                                               void *mem );
 
+/** Alias for To header. */
+typedef pjsip_fromto_hdr pjsip_to_hdr;
+
 /**
  * Create a To header.
  *
@@ -1664,6 +1786,36 @@ PJ_DECL(pjsip_from_hdr*) pjsip_fromto_hdr_set_from( pjsip_fromto_hdr *hdr );
  * @return          "To" header.
  */
 PJ_DECL(pjsip_to_hdr*)   pjsip_fromto_hdr_set_to( pjsip_fromto_hdr *hdr );
+
+/* **************************************************************************/
+/**
+ * SKT-NUMP-ID header
+ */
+
+typedef struct pjsip_sktnumpid_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_sktnumpid_hdr);
+    pjsip_uri	    *uri;	    /**< URI in From/To header. */
+    pj_str_t	     sktnumpid;	    /**< sktnumpid string. */
+    pjsip_param	     other_param;   /**< Other params, concatenated as a single string. */
+} pjsip_sktnumpid_hdr;
+PJ_DECL(pjsip_sktnumpid_hdr*) pjsip_sktnumpid_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_sktnumpid_hdr*) pjsip_sktnumpid_hdr_init( pj_pool_t *pool, void *mem );
+
+/* **************************************************************************/
+/**
+ * P-Assserted-Identity (PAID) header
+ */
+
+typedef struct pjsip_passertedid_hdr
+{
+    PJSIP_DECL_HDR_MEMBER(struct pjsip_passertedid_hdr);
+    pjsip_uri	    *uri;
+    pj_str_t passertedid;	    /**< PAssertedID string. */
+    pjsip_param	     other_param;   /**< Other params, concatenated as a single string. */
+} pjsip_passertedid_hdr;
+PJ_DECL(pjsip_passertedid_hdr*) pjsip_passertedid_hdr_create( pj_pool_t *pool );
+PJ_DECL(pjsip_passertedid_hdr*) pjsip_passertedid_hdr_init( pj_pool_t *pool, void *mem );
 
 
 /* **************************************************************************/

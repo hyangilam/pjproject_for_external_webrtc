@@ -85,10 +85,17 @@ struct pjsip_publishc
     pj_str_t                     str_target_uri;
     pjsip_uri                   *target_uri;
     pjsip_cid_hdr               *cid_hdr;
+    pjsip_tphone_hdr *tphone_hdr;
+    pjsip_reason_hdr    *reason_hdr;
+	pjsip_xtype_hdr    *xtype_hdr;
+	pjsip_passertedid_hdr    *passertedid_hdr;
+	pjsip_xinfo_hdr    *xinfo_hdr;
+	pjsip_xdid_hdr    *xdid_hdr;
     pjsip_cseq_hdr              *cseq_hdr;
     pj_str_t                     from_uri;
     pjsip_from_hdr              *from_hdr;
     pjsip_to_hdr                *to_hdr;
+    pjsip_sktnumpid_hdr		*sktnumpid_hdr;
     pj_str_t                     etag;
     pjsip_expires_hdr           *expires_hdr;
     pj_uint32_t                  expires;

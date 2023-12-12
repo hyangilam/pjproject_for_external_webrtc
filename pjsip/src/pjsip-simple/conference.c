@@ -34,8 +34,6 @@
 #include <pj/pool.h>
 #include <pj/string.h>
 
-// nugucall - conference
-
 #define THIS_FILE		    "conference.c"
 #define CONF_DEFAULT_EXPIRES	    PJSIP_CONF_DEFAULT_EXPIRES
 
@@ -54,7 +52,6 @@ static pj_bool_t mod_conf_outdlg_noti_on_rx_request(pjsip_rx_data *rdata)
     pjsip_status_code status_code;
     pj_status_t status;
 
-    // nugucall - conference-info simple outdialog
     if (rdata->msg_info.to->tag.slen == 0 &&
     rdata->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD &&
         (pj_strncmp2(&rdata->msg_info.msg->line.req.method.name, "NOTIFY", 6) == 0))
@@ -120,8 +117,8 @@ static struct pjsip_module mod_conference =
     NULL,			    /* start()				*/
     NULL,			    /* stop()				*/
     NULL,			    /* unload()				*/
-    &mod_conf_outdlg_noti_on_rx_request,			    /* on_rx_request()			*/ // nugucall - conference-info simple outdialog
-	// NULL,				/* on_rx_request()			*/ // nugucall - conference-info simple outdialog
+    &mod_conf_outdlg_noti_on_rx_request,			    /* on_rx_request()			*/
+	// NULL,				/* on_rx_request()			*/
     NULL,			    /* on_rx_response()			*/
     NULL,			    /* on_tx_request.			*/
     NULL,			    /* on_tx_response()			*/

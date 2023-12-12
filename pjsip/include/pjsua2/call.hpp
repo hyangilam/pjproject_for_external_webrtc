@@ -465,7 +465,9 @@ struct CallInfo
     /**
      * Remote URI
      */
-    string              remoteUri;
+    string		remoteUri;
+    string      remoteDisplay;
+    string      remoteUser;
     
     /**
      * Remote contact
@@ -476,8 +478,32 @@ struct CallInfo
     /**
      * Dialog Call-ID string.
      */
-    string              callIdString;
+    string		callIdString;
+
+    // to Header field
+    string      toHeaderString;
+
+    // SKT-NUMP-ID Header field
+    string      sktnumpidHeaderString;
+
+    string      tphoneString;
+    // reason
+    string      reasonString;
+
+	// Xtype
+    string      xTypeString;
     
+	// P-Asserted-Identity
+    string      pAssertedIDString;
+    string      paidDisplay;        // dykim
+    string      paidUser;
+
+	// Xinfo
+    string      xInfoString;
+	
+	// Xdid
+    string      xDidString;
+
     /**
      * Call setting
      */

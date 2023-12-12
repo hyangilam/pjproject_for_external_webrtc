@@ -70,6 +70,11 @@ struct AccountRegConfig : public PersistentObject
     SipHeaderVector     headers;
 
     /**
+     * The optional custom SIP headers to be put in the All Tx
+     * request and response.
+     */
+    SipHeaderVector	headersForAllTx;
+    /**
      * Additional parameters that will be appended in the Contact header
      * of the registration requests. This will be appended after
      * \a AccountSipConfig.contactParams;

@@ -489,7 +489,16 @@ struct SipRxData
      * The whole message data as a string, containing both the header section
      * and message body section.
      */
-    string              wholeMsg;
+    string		wholeMsg;
+
+    string      tphone;
+	string		reason;
+	string		xType;
+	string		xInfo;
+	string		xDid;
+	string		pAssertedID;
+    string      paidDisplay;
+    string      paidUser;
 
     /**
      * Source address of the message.

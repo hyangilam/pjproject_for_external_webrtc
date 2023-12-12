@@ -368,6 +368,7 @@ PJ_DEF(void) pjsua_acc_config_default(pjsua_acc_config *cfg)
     pjmedia_stream_ka_config_default(&cfg->stream_ka_cfg);
 #endif
     pj_list_init(&cfg->reg_hdr_list);
+    pj_list_init(&cfg->default_custom_hdr_list);
     pj_list_init(&cfg->sub_hdr_list);
 
     pj_list_init(&cfg->conf_sub_hdr_list);
@@ -3127,8 +3128,7 @@ void pjsua_process_msg_data(pjsip_tx_data *tdata,
     const pjsip_hdr *hdr;
 
     /* Always add User-Agent */
-    if (pjsua_var.ua_cfg.user_agent.slen && 
-        tdata->msg->type == PJSIP_REQUEST_MSG) 
+    if (pjsua_var.ua_cfg.user_agent.slen /*&& tdata->msg->type == PJSIP_REQUEST_MSG*/) // always add user-agent header to sip msg
     {
         const pj_str_t STR_USER_AGENT = { "User-Agent", 10 };
         pjsip_hdr *h;

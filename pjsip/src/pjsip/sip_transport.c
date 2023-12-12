@@ -747,6 +747,7 @@ PJ_DEF(pj_status_t) pjsip_tx_data_clone(const pjsip_tx_data *src,
      */
     //dst->is_pending = src->is_pending;
 
+	dst->is_cloned = PJ_TRUE;
     PJ_LOG(5,(THIS_FILE,
              "Tx data %s cloned",
              pjsip_tx_data_get_info(dst)));
@@ -820,6 +821,7 @@ PJ_DEF(pj_status_t) pjsip_rx_data_clone( const pjsip_rx_data *src,
         GET_MSG_HDR(CALL_ID, cid);
         GET_MSG_HDR(FROM, from);
         GET_MSG_HDR(TO, to);
+        GET_MSG_HDR(SKTNUMPID, sktnumpid);
         GET_MSG_HDR(VIA, via);
         GET_MSG_HDR(CSEQ, cseq);
         GET_MSG_HDR(MAX_FORWARDS, max_fwd);
@@ -829,6 +831,12 @@ PJ_DEF(pj_status_t) pjsip_rx_data_clone( const pjsip_rx_data *src,
         GET_MSG_HDR(CONTENT_LENGTH, clen);
         GET_MSG_HDR(REQUIRE, require);
         GET_MSG_HDR(SUPPORTED, supported);
+        GET_MSG_HDR(P_SKT_TPHONE, tphone);
+        GET_MSG_HDR(REASON, reason);
+        GET_MSG_HDR(XTYPE, xtype);
+        GET_MSG_HDR(PASSERTEDID, passertedid);
+        GET_MSG_HDR(XINFO, xinfo);
+        GET_MSG_HDR(XDID, xdid);
         default:
             break;
         }
@@ -918,6 +926,14 @@ PJ_DEF(pj_status_t) pjsip_transport_send(  pjsip_transport *tr,
         PJ_LOG(2,(THIS_FILE, "Unable to send %s: message is pending", 
                              pjsip_tx_data_get_info(tdata)));
         return PJSIP_EPENDINGTX;
+    }
+    if (tdata->auth_retry == PJ_FALSE && tdata->is_cloned == PJ_FALSE) {
+        const pjsip_hdr *hdr = pjsip_default_custom_hdr.next;
+        while (hdr != &pjsip_default_custom_hdr) {
+            pjsip_hdr *h = (pjsip_hdr *) pjsip_hdr_clone(tdata->pool, hdr);
+            pjsip_msg_add_hdr(tdata->msg, h);
+            hdr = hdr->next;
+        }
     }
 
     /* Add reference to prevent deletion, and to cancel idle timer if

@@ -239,6 +239,7 @@ void AccountRegConfig::readObject(const ContainerNode &node)
     NODE_READ_STRING    (this_node, contactParams);
 
     readSipHeaders(this_node, "headers", headers);
+    readSipHeaders(this_node, "headersForAllTx", headersForAllTx);
 }
 
 void AccountRegConfig::writeObject(ContainerNode &node) const
@@ -259,6 +260,7 @@ void AccountRegConfig::writeObject(ContainerNode &node) const
     NODE_WRITE_STRING   (this_node, contactParams);
 
     writeSipHeaders(this_node, "headers", headers);
+    writeSipHeaders(this_node, "headersForAllTx", headersForAllTx);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -599,6 +601,9 @@ void AccountConfig::toPj(pjsua_acc_config &ret) const
     for (i=0; i<regConfig.headers.size(); ++i) {
         pj_list_push_back(&ret.reg_hdr_list, &regConfig.headers[i].toPj());
     }
+    for (i=0; i<regConfig.headersForAllTx.size(); ++i) {
+    pj_list_push_back(&ret.default_custom_hdr_list, &regConfig.headersForAllTx[i].toPj());
+    }
 
     // AccountSipConfig
     ret.cred_count = 0;
@@ -765,6 +770,14 @@ void AccountConfig::fromPj(const pjsua_acc_config &prm,
         new_hdr.fromPj(hdr);
 
         regConfig.headers.push_back(new_hdr);
+        hdr = hdr->next;
+    }
+	regConfig.headersForAllTx.clear();
+    hdr = prm.default_custom_hdr_list.next;
+    while (hdr != &prm.default_custom_hdr_list) {
+        SipHeader new_hdr;
+        new_hdr.fromPj(hdr);
+        regConfig.headersForAllTx.push_back(new_hdr);
 
         hdr = hdr->next;
     }
