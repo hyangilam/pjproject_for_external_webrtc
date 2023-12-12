@@ -6611,7 +6611,7 @@ case $target in
 	# QoS
 	case $target in
 	  *darwin*)
-		ac_os_objs="$ac_os_objs sock_qos_darwin.o sock_qos_bsd.o"
+		ac_os_objs="$ac_os_objs sock_qos_darwin.o sock_qos_bsd.o addr_resolv_darwin.o"
 		;;
 	  *)
 		ac_os_objs="$ac_os_objs sock_qos_bsd.o"

@@ -20,6 +20,8 @@ export PJLIB_OBJS += file_access_unistd.o file_io_ansi.o
 
 export PJLIB_OBJS += sock_qos_darwin.o
 
+export PJLIB_OBJS += addr_resolv_darwin.o
+
 #
 # TEST_OBJS are operating system specific object files to be included in
 # the test application.

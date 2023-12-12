@@ -152,7 +152,7 @@ static void activesock_create_iphone_os_stream(pj_activesock_t *asock)
         if (!asock->readStream ||
             CFReadStreamSetProperty(asock->readStream,
                                     kCFStreamNetworkServiceType,
-                                    kCFStreamNetworkServiceTypeVoIP)
+				    kCFStreamNetworkServiceTypeVoice)
             != TRUE ||
             CFReadStreamOpen(asock->readStream) != TRUE)
         {

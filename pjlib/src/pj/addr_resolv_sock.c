@@ -22,11 +22,14 @@
 #include <pj/errno.h>
 #include <pj/ip_helper.h>
 #include <pj/compat/socket.h>
+#include <pj/log.h>
 
 #if defined(PJ_GETADDRINFO_USE_CFHOST) && PJ_GETADDRINFO_USE_CFHOST!=0
 #   include <CoreFoundation/CFString.h>
 #   include <CFNetwork/CFHost.h>
+#	include <pj/addr_resolv_darwin.h>
 #endif
+#define THIS_FILE		"addr_resolv_sock.c"
 
 PJ_DEF(pj_status_t) pj_gethostbyname(const pj_str_t *hostname, pj_hostent *phe)
 {
@@ -58,6 +61,34 @@ PJ_DEF(pj_status_t) pj_gethostbyname(const pj_str_t *hostname, pj_hostent *phe)
 
     return PJ_SUCCESS;
 }
+#if defined(PJ_GETADDRINFO_USE_CFHOST) && PJ_GETADDRINFO_USE_CFHOST != 0
+static bool resolved = false;
+void stopHostResolution(CFHostRef hostRef, CFStringRef hostName) {
+    PJ_LOG(4, (THIS_FILE, "stopHostResolution"));
+    CFHostSetClient(hostRef, NULL, NULL);
+    CFHostUnscheduleFromRunLoop(hostRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+    CFHostCancelInfoResolution(hostRef, kCFHostAddresses);
+    CFRelease(hostRef);
+    CFRelease(hostName);
+}
+void hostClientCallback(CFHostRef theHost, CFHostInfoType typeInfo, const CFStreamError *error, void *info) {
+    PJ_LOG(4, (THIS_FILE, "hostClientCallback"));
+    if (error != NULL && error->domain != 0) {
+        PJ_LOG(4, (THIS_FILE, "Host resolution failed with error: %ld\n", (long) error->error));
+        resolved = false;
+        CFRunLoopStop(CFRunLoopGetCurrent());
+        return;
+    }
+    if (typeInfo == kCFHostAddresses) {
+        PJ_LOG(4, (THIS_FILE, "Host resolution success"));
+        resolved = true;
+    } else {
+        PJ_LOG(4, (THIS_FILE, "typeInfo is other"));
+        resolved = false;
+    }
+    CFRunLoopStop(CFRunLoopGetCurrent());
+}
+#endif
 
 /* Resolve IPv4/IPv6 address */
 PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
@@ -70,6 +101,10 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 #if defined(PJ_GETADDRINFO_USE_CFHOST) && PJ_GETADDRINFO_USE_CFHOST!=0
     CFStringRef hostname;
     CFHostRef hostRef;
+    CFHostClientContext clientContext = { 0, NULL, CFRetain, CFRelease, NULL };
+    bool success = false;
+    __block CFRunLoopRef currentRunLoop = NULL;
+    __block bool isTimeout = false;
     pj_status_t status = PJ_SUCCESS;
 #else
     int rc;
@@ -125,7 +160,41 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
                                                 kCFStringEncodingASCII,
                                                 kCFAllocatorNull);
     hostRef = CFHostCreateWithName(kCFAllocatorDefault, hostname);
-    if (CFHostStartInfoResolution(hostRef, kCFHostAddresses, nil)) {
+    success = CFHostSetClient(hostRef, hostClientCallback, &clientContext);
+    if(success == false) {
+        PJ_LOG(4,(THIS_FILE, "CFHostSetClient reture false"));
+        stopHostResolution(hostRef, hostname);
+        status = PJ_ERESOLVE;
+        return status;
+    }
+    CFHostScheduleWithRunLoop(hostRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+    success = CFHostStartInfoResolution(hostRef, kCFHostAddresses, nil);
+    if(success == false) {
+        PJ_LOG(4,(THIS_FILE, "CFHostStartInfoResolution failure"));
+        stopHostResolution(hostRef, hostname);
+        status = PJ_ERESOLVE;
+        return status;
+    }
+    resolved = false;
+    currentRunLoop = NULL;
+    currentRunLoop = CFRunLoopGetCurrent();
+    dispatch_block_t block = dispatch_block_create(0, ^{
+        PJ_LOG(4,(THIS_FILE, "timeout. runLoop stop block executed"));
+        isTimeout = true;
+        CFRunLoopStop(currentRunLoop);
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), block);
+    PJ_LOG(4,(THIS_FILE, "before CFRunLoopRun"));
+    CFRunLoopRun();
+    PJ_LOG(4,(THIS_FILE, "after CFRunLoopRun"));
+    if(isTimeout == true) {
+        PJ_LOG(4,(THIS_FILE, "host resolution timeout"));
+        stopHostResolution(hostRef, hostname);
+        status = PJ_ERESOLVE;
+        return status;
+    }
+    dispatch_block_cancel(block);
+    if(resolved) {
         CFArrayRef addrRef = CFHostGetAddressing(hostRef, nil);
         i = 0;
         if (addrRef != nil) {
@@ -167,11 +236,11 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
             status = PJ_ERESOLVE;
 
     } else {
+        PJ_LOG(4,(THIS_FILE, "resolved[false]"));
         status = PJ_ERESOLVE;
     }
     
-    CFRelease(hostRef);
-    CFRelease(hostname);
+    stopHostResolution(hostRef, hostname);
     
     return status;
 #else
