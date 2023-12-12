@@ -878,6 +878,17 @@ PJ_DEF(pj_status_t) pjsip_get_dest_info(const pjsip_uri *target_uri,
         return PJSIP_ENOROUTESET;
     }
 
+    if(pj_cfg()->transport.forceUseCellularData) {
+        if (pj_cfg()->transport.sproxyIPAddressIsV6) {
+            if(strlen(pj_cfg()->transport.sproxyIPv6Address) > 0) {
+                pj_strdup2(pool, &dest_info->addr.host, pj_cfg()->transport.sproxyIPv6Address);
+            }
+        } else {
+            if(strlen(pj_cfg()->transport.sproxyIPv4Address) > 0) {
+                pj_strdup2(pool, &dest_info->addr.host, pj_cfg()->transport.sproxyIPv4Address);
+            }
+        }
+    }
     /* Handle IPv6 (https://github.com/pjsip/pjproject/issues/861) */
     if (dest_info->type != PJSIP_TRANSPORT_UNSPECIFIED && 
         pj_strchr(&dest_info->addr.host, ':'))

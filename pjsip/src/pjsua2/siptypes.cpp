@@ -299,6 +299,12 @@ void TransportConfig::fromPj(const pjsua_transport_config &prm)
     this->tlsConfig.fromPj(prm.tls_setting);
     this->qosType       = prm.qos_type;
     this->qosParams     = prm.qos_params;
+    this->forceUseCellularData = prm.forceUseCellularData;
+    this->cellularNWInterfaceName = pj2Str(prm.cellularNWInterfaceName);
+    this->cellularIPAddress = pj2Str(prm.cellularIPAddress);
+    this->sproxyIPv4Address = pj2Str(prm.sproxyIPv4Address);
+    this->sproxyIPv6Address = pj2Str(prm.sproxyIPv6Address);
+    this->sproxyIPAddressIsV6 = prm.sproxyIPAddressIsV6;
 }
 
 pjsua_transport_config TransportConfig::toPj() const
@@ -314,7 +320,12 @@ pjsua_transport_config TransportConfig::toPj() const
     tc.tls_setting      = this->tlsConfig.toPj();
     tc.qos_type         = this->qosType;
     tc.qos_params       = this->qosParams;
-
+    tc.forceUseCellularData = this->forceUseCellularData;
+    tc.cellularNWInterfaceName = str2Pj(this->cellularNWInterfaceName);
+    tc.cellularIPAddress = str2Pj(this->cellularIPAddress);
+    tc.sproxyIPv4Address = str2Pj(this->sproxyIPv4Address);
+    tc.sproxyIPv6Address = str2Pj(this->sproxyIPv6Address);
+    tc.sproxyIPAddressIsV6 = this->sproxyIPAddressIsV6;
     return tc;
 }
 
@@ -328,6 +339,11 @@ void TransportConfig::readObject(const ContainerNode &node) PJSUA2_THROW(Error)
     NODE_READ_STRING    ( this_node, boundAddress);
     NODE_READ_NUM_T     ( this_node, pj_qos_type, qosType);
     readQosParams       ( this_node, qosParams);
+    NODE_READ_BOOL      ( this_node, forceUseCellularData);
+    NODE_READ_STRING    ( this_node, cellularNWInterfaceName);
+    NODE_READ_STRING    ( this_node, cellularIPAddress);
+    NODE_READ_STRING    ( this_node, sproxyIPv4Address);
+    NODE_READ_STRING    ( this_node, sproxyIPv4Address);
     NODE_READ_OBJ       ( this_node, tlsConfig);
 }
 
@@ -342,6 +358,12 @@ void TransportConfig::writeObject(ContainerNode &node) const
     NODE_WRITE_STRING    ( this_node, boundAddress);
     NODE_WRITE_NUM_T     ( this_node, pj_qos_type, qosType);
     writeQosParams       ( this_node, qosParams);
+    NODE_WRITE_BOOL      ( this_node, forceUseCellularData);
+    NODE_WRITE_STRING    ( this_node, cellularNWInterfaceName);
+    NODE_WRITE_STRING    ( this_node, cellularIPAddress);
+    NODE_WRITE_STRING    ( this_node, sproxyIPv4Address);
+    NODE_WRITE_STRING    ( this_node, sproxyIPv6Address);
+    NODE_WRITE_BOOL      ( this_node, sproxyIPAddressIsV6);
     NODE_WRITE_OBJ       ( this_node, tlsConfig);
 }
 

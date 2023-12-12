@@ -3210,6 +3210,12 @@ typedef struct pjsua_transport_config
      */
     pj_sockopt_params   sockopt_params;
 
+    pj_bool_t    forceUseCellularData;
+    pj_str_t    cellularNWInterfaceName;
+    pj_str_t    cellularIPAddress;
+    pj_str_t    sproxyIPv4Address;
+    pj_str_t    sproxyIPv6Address;
+    pj_bool_t sproxyIPAddressIsV6;
 } pjsua_transport_config;
 
 
@@ -3299,7 +3305,7 @@ typedef struct pjsua_transport_info
  * @return              PJ_SUCCESS on success, or the appropriate error code.
  */
 PJ_DECL(pj_status_t) pjsua_transport_create(pjsip_transport_type_e type,
-                                            const pjsua_transport_config *cfg,
+                                            pjsua_transport_config *cfg,
                                             pjsua_transport_id *p_id);
 
 /**
@@ -4547,6 +4553,7 @@ typedef struct pjsua_acc_config
      * Default: PJMEDIA_STREAM_ENABLE_XR
      */
     pj_bool_t           enable_rtcp_xr;
+	pjsua_transport_config sip_cfg;
 
 } pjsua_acc_config;
 

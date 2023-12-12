@@ -165,6 +165,7 @@ PJ_DEF(void) pjsua_acc_config_dup( pj_pool_t *pool,
     pj_strdup(pool, &dst->ka_data, &src->ka_data);
 
     pjmedia_rtcp_fb_setting_dup(pool, &dst->rtcp_fb_cfg, &src->rtcp_fb_cfg);
+    pjsua_transport_config_dup(pool, &dst->sip_cfg, &src->sip_cfg);
 }
 
 /*
@@ -565,6 +566,26 @@ PJ_DEF(pj_status_t) pjsua_acc_add( const pjsua_acc_config *cfg,
     PJ_LOG(4,(THIS_FILE, "Account %.*s added with id %d",
               (int)cfg->id.slen, cfg->id.ptr, id));
 
+    pj_cfg()->transport.forceUseCellularData = cfg->sip_cfg.forceUseCellularData;
+    memset(pj_cfg()->transport.cellularNWInterfaceName, 0, sizeof(pj_cfg()->transport.cellularNWInterfaceName));
+    memset(pj_cfg()->transport.cellularIPAddress, 0, sizeof(pj_cfg()->transport.cellularIPAddress));
+    memset(pj_cfg()->transport.sproxyIPv4Address, 0, sizeof(pj_cfg()->transport.sproxyIPv4Address));
+    memset(pj_cfg()->transport.sproxyIPv6Address, 0, sizeof(pj_cfg()->transport.sproxyIPv6Address));
+    pj_cfg()->transport.sproxyIPAddressIsV6 = cfg->sip_cfg.sproxyIPAddressIsV6;
+    if (pj_cfg()->transport.forceUseCellularData) {
+        if (cfg->sip_cfg.cellularNWInterfaceName.ptr && cfg->sip_cfg.cellularNWInterfaceName.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.cellularNWInterfaceName, &cfg->sip_cfg.cellularNWInterfaceName);
+        }
+        if (cfg->sip_cfg.cellularIPAddress.ptr && cfg->sip_cfg.cellularIPAddress.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.cellularIPAddress, &cfg->sip_cfg.cellularIPAddress);
+        }
+        if (cfg->sip_cfg.sproxyIPv4Address.ptr && cfg->sip_cfg.sproxyIPv4Address.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.sproxyIPv4Address, &cfg->sip_cfg.sproxyIPv4Address);
+        }
+        if (cfg->sip_cfg.sproxyIPv6Address.ptr && cfg->sip_cfg.sproxyIPv6Address.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.sproxyIPv6Address, &cfg->sip_cfg.sproxyIPv6Address);
+        }
+    }
     /* If accounts has registration enabled, start registration */
     if (pjsua_var.acc[id].cfg.reg_uri.slen) {
         if (pjsua_var.acc[id].cfg.register_on_acc_add)
@@ -2777,6 +2798,9 @@ static pj_status_t pjsua_regc_init(int acc_id)
 pj_bool_t pjsua_sip_acc_is_using_ipv6(pjsua_acc_id acc_id)
 {
     pjsua_acc *acc = &pjsua_var.acc[acc_id];
+	if (acc->cfg.sip_cfg.forceUseCellularData && acc->cfg.sip_cfg.sproxyIPAddressIsV6) {
+        acc->tp_type |= PJSIP_TRANSPORT_IPV6;
+    }
 
     return ((acc->tp_type & PJSIP_TRANSPORT_IPV6) == PJSIP_TRANSPORT_IPV6 ||
             pjsua_var.acc[acc_id].cfg.ipv6_sip_use ==

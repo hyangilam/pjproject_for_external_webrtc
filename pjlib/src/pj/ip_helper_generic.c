@@ -158,6 +158,109 @@ static pj_status_t if_enum_by_af(int af,
     return (*p_cnt != 0) ? PJ_SUCCESS : PJ_ENOTFOUND;
 }
 
+static pj_status_t if_enum_by_af3(int af,
+				 unsigned *p_cnt,
+				 pj_sockaddr ifs[],
+                 pj_str_t ifs_name[])
+{
+
+    struct ifaddrs *ifap = NULL, *it;
+    unsigned max;
+
+    PJ_ASSERT_RETURN(af==PJ_AF_INET || af==PJ_AF_INET6, PJ_EINVAL);
+
+    TRACE_((THIS_FILE, "Starting interface enum with getifaddrs() for af=%d",
+            af));
+
+    if (getifaddrs(&ifap) != 0) {
+        TRACE_((THIS_FILE, " getifarrds() failed: %s", get_os_errmsg()));
+        return PJ_RETURN_OS_ERROR(pj_get_netos_error());
+    }
+
+    it = ifap;
+    max = *p_cnt;
+    *p_cnt = 0;
+    for (; it!=NULL && *p_cnt < max; it = it->ifa_next) {
+        struct sockaddr *ad = it->ifa_addr;
+
+        TRACE_((THIS_FILE, " checking %s", it->ifa_name));
+
+        if ((it->ifa_flags & IFF_UP)==0) {
+            TRACE_((THIS_FILE, "  interface is down"));
+            continue; /* Skip when interface is down */
+        }
+
+        if ((it->ifa_flags & IFF_RUNNING)==0) {
+            TRACE_((THIS_FILE, "  interface is not running"));
+            continue; /* Skip when interface is not running */
+        }
+
+        // ignore wifi network interface
+        if (strncmp(it->ifa_name, "en", 2) == 0) {
+            TRACE_((THIS_FILE, "  skip wifi interface[%s]", it->ifa_name));
+            continue; /* Skip wifi interface */
+        }
+
+#if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
+        if (it->ifa_flags & IFF_LOOPBACK) {
+            TRACE_((THIS_FILE, "  loopback interface"));
+            continue; /* Skip loopback interface */
+        }
+#endif
+
+        if (ad==NULL) {
+            TRACE_((THIS_FILE, "  NULL address ignored"));
+            continue; /* reported to happen on Linux 2.6.25.9
+                         with ppp interface */
+        }
+
+        if (ad->sa_family != af) {
+            TRACE_((THIS_FILE, "  address %s ignored (af=%d)",
+                    get_addr(ad), ad->sa_family));
+            continue; /* Skip when interface is down */
+        }
+
+        /* Ignore 192.0.0.0/29 address.
+         * Ref: https://datatracker.ietf.org/doc/html/rfc7335#section-4
+         */
+        if (af==pj_AF_INET() &&
+            (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4) ==
+             201326592) /* 0b1100000000000000000000000000 which is
+                           192.0.0.0 >> 4 */
+        {
+            TRACE_((THIS_FILE, "  address %s ignored (192.0.0.0/29 class)",
+                    get_addr(ad), ad->sa_family));
+            continue;
+        }
+
+        /* Ignore 0.0.0.0/8 address. This is a special address
+         * which doesn't seem to have practical use.
+         */
+        if (af==pj_AF_INET() &&
+            (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 24) == 0)
+        {
+            TRACE_((THIS_FILE, "  address %s ignored (0.0.0.0/8 class)",
+                    get_addr(ad), ad->sa_family));
+            continue;
+        }
+
+        TRACE_((THIS_FILE, "  address %s (af=%d) added at index %d",
+                get_addr(ad), ad->sa_family, *p_cnt));
+
+        pj_bzero(&ifs[*p_cnt], sizeof(ifs[0]));
+        pj_memcpy(&ifs[*p_cnt], ad, pj_sockaddr_get_len(ad));
+        PJ_SOCKADDR_RESET_LEN(&ifs[*p_cnt]);
+		
+		pj_strcpy2(&ifs_name[*p_cnt], it->ifa_name);
+		
+        (*p_cnt)++;
+    }
+
+    freeifaddrs(ifap);
+    TRACE_((THIS_FILE, "done, found %d address(es)", *p_cnt));
+    return (*p_cnt != 0) ? PJ_SUCCESS : PJ_ENOTFOUND;
+}
+
 #elif defined(SIOCGIFCONF) && \
       defined(PJ_HAS_NET_IF_H) && PJ_HAS_NET_IF_H != 0
 
@@ -448,6 +551,35 @@ PJ_DEF(pj_status_t) pj_enum_ip_interface(int af,
     return (*p_cnt != 0) ? PJ_SUCCESS : PJ_ENOTFOUND;
 }
 
+#ifndef PJ_CONFIG_ANDROID
+PJ_DEF(pj_status_t) pj_enum_ip_interface3(int af,
+                                         unsigned *p_cnt,
+                                         pj_sockaddr ifs[],
+                                         pj_str_t ifs_name[])
+{
+    unsigned start;
+    pj_status_t status;
+    start = 0;
+    if (af==PJ_AF_INET6 || af==PJ_AF_UNSPEC) {
+        unsigned max = *p_cnt;
+        status = if_enum_by_af3(PJ_AF_INET6, &max, &ifs[start], &ifs_name[start]);
+        if (status == PJ_SUCCESS) {
+            start += max;
+            (*p_cnt) -= max;
+        }
+    }
+    if (af==PJ_AF_INET || af==PJ_AF_UNSPEC) {
+        unsigned max = *p_cnt;
+        status = if_enum_by_af3(PJ_AF_INET, &max, &ifs[start], &ifs_name[start]);
+        if (status == PJ_SUCCESS) {
+            start += max;
+            (*p_cnt) -= max;
+        }
+    }
+    *p_cnt = start;
+    return (*p_cnt != 0) ? PJ_SUCCESS : PJ_ENOTFOUND;
+}
+#endif
 /*
  * Enumerate the IP routing table for this host.
  */
@@ -594,6 +726,7 @@ PJ_DEF(pj_status_t) pj_enum_ip_interface2( const pj_enum_ip_option *opt,
 #if defined(PJ_LINUX) && PJ_LINUX!=0
         pj_sockaddr addrs[*p_cnt];
         pj_sockaddr deprecatedAddrs[*p_cnt];
+    	pj_str_t ifs_name[*p_cnt];
         unsigned deprecatedCount = *p_cnt;
         unsigned cnt = 0;
         unsigned i;

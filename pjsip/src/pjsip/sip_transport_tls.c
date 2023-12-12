@@ -43,6 +43,9 @@
 struct tls_listener;
 struct tls_transport;
 
+#if TARGET_OS_IPHONE
+static unsigned int if_index;
+#endif
 /*
  * Definition of TLS/SSL transport listener, and it's descendant of
  * pjsip_tpfactory.
@@ -343,6 +346,15 @@ static void set_ssock_param(pj_ssl_sock_param *ssock_param,
                                     listener->tls_setting.enable_renegotiation;
     /* Copy the sockopt */
     if (listener->tls_setting.sockopt_params.cnt > 0) {
+#if TARGET_OS_IPHONE
+    	if (pj_cfg()->transport.forceUseCellularData == PJ_TRUE) {
+        	if_index = if_nametoindex(pj_cfg()->transport.cellularNWInterfaceName);
+        	for(int i = 0; i < listener->tls_setting.sockopt_params.cnt; i++ ) {
+            	listener->tls_setting.sockopt_params.options[i].optval = &if_index;
+            	listener->tls_setting.sockopt_params.options[i].optlen = sizeof(if_index);
+        	}
+    	}
+#endif
         pj_memcpy(&ssock_param->sockopt_params, 
                   &listener->tls_setting.sockopt_params,
                   sizeof(listener->tls_setting.sockopt_params));
@@ -1240,6 +1252,15 @@ static pj_status_t lis_create_transport(pjsip_tpfactory *factory,
     ssock_param.enable_renegotiation = listener->tls_setting.enable_renegotiation;
     /* Copy the sockopt */
     if (listener->tls_setting.sockopt_params.cnt > 0) {
+#if TARGET_OS_IPHONE
+	    if (pj_cfg()->transport.forceUseCellularData == PJ_TRUE) {
+	        if_index = if_nametoindex(pj_cfg()->transport.cellularNWInterfaceName);
+	        for(int i = 0; i < listener->tls_setting.sockopt_params.cnt; i++ ) {
+	            listener->tls_setting.sockopt_params.options[i].optval = &if_index;
+	            listener->tls_setting.sockopt_params.options[i].optlen = sizeof(if_index);
+	        }
+	    }
+#endif
         pj_memcpy(&ssock_param.sockopt_params, 
                   &listener->tls_setting.sockopt_params,
                   sizeof(listener->tls_setting.sockopt_params));

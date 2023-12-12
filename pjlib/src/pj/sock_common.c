@@ -735,7 +735,7 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
 {
     unsigned i, count, cand_cnt;
     enum {
-        CAND_CNT = 8,
+        CAND_CNT = 40,
 
         /* Weighting to be applied to found addresses */
         WEIGHT_HOSTNAME = 1,    /* hostname IP is not always valid! */
@@ -749,6 +749,8 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
     };
     /* candidates: */
     pj_sockaddr cand_addr[CAND_CNT];
+    pj_str_t cand_if_name[CAND_CNT];
+    char dummy_if_name[40][32];
     int         cand_weight[CAND_CNT];
     int         selected_cand;
     char        strip[PJ_INET6_ADDRSTRLEN+10];
@@ -815,6 +817,10 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
 
     cand_cnt = 0;
     pj_bzero(cand_addr, sizeof(cand_addr));
+    pj_bzero(cand_if_name, sizeof(cand_if_name));
+    for(i = 0; i < CAND_CNT; i++) {
+        cand_if_name[i].ptr = dummy_if_name[i];
+    }
     pj_bzero(cand_weight, sizeof(cand_weight));
     for (i=0; i<PJ_ARRAY_SIZE(cand_addr); ++i) {
         cand_addr[i].addr.sa_family = (pj_uint16_t)af;
@@ -878,7 +884,14 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
         unsigned start_if = cand_cnt;
         count = PJ_ARRAY_SIZE(cand_addr) - start_if;
 
+#if PJ_CONFIG_ANDROID
+	status = pj_enum_ip_interface(af, &count, &cand_addr[start_if]);
+#else
+    if(pj_cfg()->transport.forceUseCellularData)
+        status = pj_enum_ip_interface3(af, &count, &cand_addr[start_if], &cand_if_name[start_if]);
+    else
         status = pj_enum_ip_interface(af, &count, &cand_addr[start_if]);
+#endif
         if (status == PJ_SUCCESS && count) {
             /* Clear the port number */
             for (i=0; i<count; ++i)
@@ -964,6 +977,17 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
         }
     } else {
         return PJ_EAFNOTSUP;
+    }
+    if(pj_cfg()->transport.forceUseCellularData
+        && strlen(pj_cfg()->transport.cellularNWInterfaceName) > 0) {
+        for (i=0; i<cand_cnt; ++i) {
+            if (pj_strncmp2(&cand_if_name[i], pj_cfg()->transport.cellularNWInterfaceName, strlen(pj_cfg()->transport.cellularNWInterfaceName))==0) {
+                cand_weight[i] += 50;
+                TRACE_((THIS_FILE, "%s - candidate IP %s, weight=%d",
+                        pj_cfg()->transport.cellularNWInterfaceName, pj_sockaddr_print(&cand_addr[i], strip, sizeof(strip), 3),
+                        cand_weight[i]));
+            }
+        }
     }
 
     /* Enumerate candidates to get the best IP address to choose */

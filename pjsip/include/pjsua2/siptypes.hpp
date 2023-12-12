@@ -406,6 +406,12 @@ struct TransportConfig : public PersistentObject
      */
     pj_qos_params       qosParams;
 
+    bool    forceUseCellularData;
+    string cellularNWInterfaceName;
+    string cellularIPAddress;
+    string sproxyIPv4Address;
+    string sproxyIPv6Address;
+    bool sproxyIPAddressIsV6;
 public:
     /** Default constructor initialises with default values */
     TransportConfig();

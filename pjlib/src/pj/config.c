@@ -88,3 +88,13 @@ PJ_DEF(void) pj_dump_config(void)
     PJ_LOG(3, (id, " PJ_SSL_SOCK_IMP           : %d", PJ_SSL_SOCK_IMP));
 }
 
+pj_cfg_t pj_cfg_var = {
+        {
+            0,
+            "",
+            "",
+            "",
+            "",
+            0
+        }
+};

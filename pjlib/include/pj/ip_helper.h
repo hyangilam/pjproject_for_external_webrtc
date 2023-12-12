@@ -110,6 +110,12 @@ PJ_DECL(pj_status_t) pj_enum_ip_interface(int af,
                                           unsigned *count,
                                           pj_sockaddr ifs[]);
 
+#ifndef PJ_CONFIG_ANDROID
+PJ_DECL(pj_status_t) pj_enum_ip_interface3(int af,
+                                          unsigned *count,
+                                          pj_sockaddr ifs[],
+                                          pj_str_t ifs_name[]);
+#endif
 
 /**
  * Enumerate the local IP interfaces currently active in the host with

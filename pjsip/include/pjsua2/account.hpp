@@ -210,6 +210,7 @@ typedef std::vector<AuthCredInfo> AuthCredInfoVector;
  */
 struct AccountSipConfig : public PersistentObject
 {
+    TransportConfig	transportConfig;
     /**
      * Array of credentials. If registration is desired, normally there should
      * be at least one credential specified, to successfully authenticate

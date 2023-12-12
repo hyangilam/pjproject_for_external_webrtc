@@ -19,6 +19,10 @@
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
 
+#if TARGET_OS_IPHONE
+#include <pj/compat/socket.h>
+static int if_index;
+#endif
 
 #define THIS_FILE   "pjsua_core.c"
 
@@ -2551,7 +2555,7 @@ static pj_status_t create_sip_udp_sock(int af,
  * Create SIP transport.
  */
 PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
-                                            const pjsua_transport_config *cfg,
+                                            pjsua_transport_config *cfg,
                                             pjsua_transport_id *p_id)
 {
     pjsip_transport *tp;
@@ -2559,6 +2563,26 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
     pj_status_t status;
 
     PJSUA_LOCK();
+    pj_cfg()->transport.forceUseCellularData = cfg->forceUseCellularData;
+    memset(pj_cfg()->transport.cellularNWInterfaceName, 0, sizeof(pj_cfg()->transport.cellularNWInterfaceName));
+    memset(pj_cfg()->transport.cellularIPAddress, 0, sizeof(pj_cfg()->transport.cellularIPAddress));
+    memset(pj_cfg()->transport.sproxyIPv4Address, 0, sizeof(pj_cfg()->transport.sproxyIPv4Address));
+    memset(pj_cfg()->transport.sproxyIPv6Address, 0, sizeof(pj_cfg()->transport.sproxyIPv6Address));
+    pj_cfg()->transport.sproxyIPAddressIsV6 = cfg->sproxyIPAddressIsV6;
+    if(pj_cfg()->transport.forceUseCellularData) {
+        if(cfg->cellularNWInterfaceName.ptr && cfg->cellularNWInterfaceName.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.cellularNWInterfaceName, &cfg->cellularNWInterfaceName);
+        }
+        if(cfg->cellularIPAddress.ptr && cfg->cellularIPAddress.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.cellularIPAddress, &cfg->cellularIPAddress);
+        }
+        if(cfg->sproxyIPv4Address.ptr && cfg->sproxyIPv4Address.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.sproxyIPv4Address, &cfg->sproxyIPv4Address);
+        }
+        if(cfg->sproxyIPv6Address.ptr && cfg->sproxyIPv6Address.slen > 0) {
+            pj_strcpy3(pj_cfg()->transport.sproxyIPv6Address, &cfg->sproxyIPv6Address);
+        }
+    }
 
     /* Find empty transport slot */
     for (id=0; id < PJ_ARRAY_SIZE(pjsua_var.tpdata); ++id) {
@@ -2589,6 +2613,16 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
             cfg = &config;
         }
 
+#if TARGET_OS_IPHONE
+    if (cfg->forceUseCellularData == PJ_TRUE && cfg->sockopt_params.cnt < PJ_MAX_SOCKOPT_PARAMS) {
+        if_index = if_nametoindex(cfg->cellularNWInterfaceName.ptr);
+        int cnt = ++cfg->sockopt_params.cnt;
+        cfg->sockopt_params.options[cnt-1].level = (type==PJSIP_TRANSPORT_UDP) ? IPPROTO_IP : IPPROTO_IPV6;
+        cfg->sockopt_params.options[cnt-1].optname = (type==PJSIP_TRANSPORT_UDP) ? IP_BOUND_IF : IPV6_BOUND_IF;
+        cfg->sockopt_params.options[cnt-1].optval = &if_index;
+        cfg->sockopt_params.options[cnt-1].optlen = sizeof(if_index);
+    }
+#endif
         /* Initialize the public address from the config, if any */
         pj_sockaddr_init(pjsip_transport_type_get_af(type), &pub_addr, 
                          NULL, (pj_uint16_t)cfg->port);
@@ -2654,6 +2688,16 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
             cfg = &config;
         }
 
+#if TARGET_OS_IPHONE
+    if (cfg->forceUseCellularData == PJ_TRUE && cfg->sockopt_params.cnt < PJ_MAX_SOCKOPT_PARAMS) {
+        if_index = if_nametoindex(cfg->cellularNWInterfaceName.ptr);
+        int cnt = ++cfg->sockopt_params.cnt;
+        cfg->sockopt_params.options[cnt-1].level = (type==PJSIP_TRANSPORT_TCP) ? IPPROTO_IP : IPPROTO_IPV6;
+        cfg->sockopt_params.options[cnt-1].optname = (type==PJSIP_TRANSPORT_TCP) ? IP_BOUND_IF : IPV6_BOUND_IF;
+        cfg->sockopt_params.options[cnt-1].optval = &if_index;
+        cfg->sockopt_params.options[cnt-1].optlen = sizeof(if_index);
+    }
+#endif
         /* Configure bind address */
         if (cfg->port)
             pj_sockaddr_set_port(&tcp_cfg.bind_addr, (pj_uint16_t)cfg->port);
@@ -2717,6 +2761,16 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
             cfg = &config;
         }
 
+#if TARGET_OS_IPHONE
+    if (cfg->forceUseCellularData == PJ_TRUE && cfg->sockopt_params.cnt < PJ_MAX_SOCKOPT_PARAMS) {
+        if_index = if_nametoindex(cfg->cellularNWInterfaceName.ptr);
+        int cnt = ++cfg->sockopt_params.cnt;
+        cfg->sockopt_params.options[cnt-1].level = (type==PJSIP_TRANSPORT_TLS) ? IPPROTO_IP : IPPROTO_IPV6;
+        cfg->sockopt_params.options[cnt-1].optname = (type==PJSIP_TRANSPORT_TLS) ? IP_BOUND_IF : IPV6_BOUND_IF;
+        cfg->sockopt_params.options[cnt-1].optval = &if_index;
+        cfg->sockopt_params.options[cnt-1].optlen = sizeof(if_index);
+    }
+#endif
         /* Init local address */
         af = (type==PJSIP_TRANSPORT_TLS) ? pj_AF_INET() : pj_AF_INET6();
         pj_sockaddr_init(af, &local_addr, NULL, 0);
@@ -2740,6 +2794,7 @@ PJ_DEF(pj_status_t) pjsua_transport_create( pjsip_transport_type_e type,
         if (cfg->public_addr.slen)
             a_name.host = cfg->public_addr;
 
+		pj_memcpy(&(cfg->tls_setting.sockopt_params), &cfg->sockopt_params, sizeof(cfg->sockopt_params));
         status = pjsip_tls_transport_start2(pjsua_var.endpt, &cfg->tls_setting,
                                             &local_addr, &a_name, 1, &tls);
         if (status != PJ_SUCCESS) {

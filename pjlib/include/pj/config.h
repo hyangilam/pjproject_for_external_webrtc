@@ -1532,6 +1532,24 @@ PJ_DECL(void) pj_dump_config(void);
 
 PJ_END_DECL
 
+typedef struct pj_cfg_t
+{
+    struct {
+        int forceUseCellularData;
+        char cellularNWInterfaceName[64];
+        char cellularIPAddress[64];
+        char sproxyIPv4Address[64];
+        char sproxyIPv6Address[64];
+        int sproxyIPAddressIsV6;
+    } transport;
+} pj_cfg_t;
 
-#endif  /* __PJ_CONFIG_H__ */
+extern pj_cfg_t pj_cfg_var;
+
+PJ_INLINE(pj_cfg_t*) pj_cfg(void)
+{
+    return &pj_cfg_var;
+}
+
+#endif	/* __PJ_CONFIG_H__ */
 

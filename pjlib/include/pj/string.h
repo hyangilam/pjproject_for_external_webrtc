@@ -182,6 +182,7 @@ PJ_IDECL(pj_str_t*) pj_strcpy(pj_str_t *dst, const pj_str_t *src);
  */
 PJ_IDECL(pj_str_t*) pj_strcpy2(pj_str_t *dst, const char *src);
 
+PJ_IDECL(char*) pj_strcpy3(char *dst, pj_str_t *src);
 /**
  * Copy source string to destination up to the specified max length.
  *
