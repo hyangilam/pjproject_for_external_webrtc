@@ -292,8 +292,15 @@ static pj_status_t sdes_media_create( pjmedia_transport *tp,
         /* Get transport protocol and drop any RTCP-FB flag */
         rem_proto = pjmedia_sdp_transport_get_proto(&m->desc.transport);
         PJMEDIA_TP_PROTO_TRIM_FLAG(rem_proto, PJMEDIA_TP_PROFILE_RTCP_FB);
+// sdp includes srtp but pjsua account mediaConfig is not set to use srtp
+#if 1
+   if (rem_proto != PJMEDIA_TP_PROTO_RTP_AVP &&
+       rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP &&
+       rem_proto != PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else
         if (rem_proto != PJMEDIA_TP_PROTO_RTP_AVP &&
             rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
         {
             return PJMEDIA_SRTP_ESDPINTRANSPORT;
         }
@@ -306,13 +313,23 @@ static pj_status_t sdes_media_create( pjmedia_transport *tp,
         /* Validate remote media transport based on SRTP usage option. */
         switch (srtp->setting.use) {
             case PJMEDIA_SRTP_DISABLED:
+#if 1
+				if (rem_proto == PJMEDIA_TP_PROTO_RTP_SAVP ||
+            		rem_proto == PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else
                 if (rem_proto == PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
                     return PJMEDIA_SRTP_ESDPINTRANSPORT;
                 break;
             case PJMEDIA_SRTP_OPTIONAL:
                 break;
             case PJMEDIA_SRTP_MANDATORY:
+#if 1
+				if (rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP &&
+            		rem_proto != PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else			
                 if (rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
                     return PJMEDIA_SRTP_ESDPINTRANSPORT;
                 break;
         }
@@ -348,8 +365,14 @@ static pj_status_t sdes_encode_sdp( pjmedia_transport *tp,
         /* Get transport protocol and drop any RTCP-FB flag */
         proto = pjmedia_sdp_transport_get_proto(&m->desc.transport);
         PJMEDIA_TP_PROTO_TRIM_FLAG(proto, PJMEDIA_TP_PROFILE_RTCP_FB);
+#if 1
+		if (proto != PJMEDIA_TP_PROTO_RTP_AVP &&
+	    	proto != PJMEDIA_TP_PROTO_RTP_SAVP &&
+        	proto != PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else
         if (proto != PJMEDIA_TP_PROTO_RTP_AVP &&
             proto != PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
         {
             return PJMEDIA_SRTP_ESDPINTRANSPORT;
         }
@@ -435,13 +458,23 @@ static pj_status_t sdes_encode_sdp( pjmedia_transport *tp,
         switch (srtp->setting.use) {
             case PJMEDIA_SRTP_DISABLED:
                 /* Should never reach here */
+#if 1
+				if (rem_proto == PJMEDIA_TP_PROTO_RTP_SAVP ||
+					rem_proto == PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else				
                 if (rem_proto == PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
                     return PJMEDIA_SRTP_ESDPINTRANSPORT;
                 return PJ_SUCCESS;
             case PJMEDIA_SRTP_OPTIONAL:
                 break;
             case PJMEDIA_SRTP_MANDATORY:
+#if 1
+				if (rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP &&
+					rem_proto != PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else			
                 if (rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
                     return PJMEDIA_SRTP_ESDPINTRANSPORT;
                 break;
         }
@@ -524,6 +557,8 @@ static pj_status_t sdes_encode_sdp( pjmedia_transport *tp,
 
                 case PJMEDIA_SRTP_MANDATORY:
                     /* Do nothing, intentional */
+					// skip SDES
+               		return PJ_SUCCESS;
                     break;
             }
 
@@ -636,14 +671,25 @@ static pj_status_t sdes_media_start( pjmedia_transport *tp,
         /* Get transport protocol and drop any RTCP-FB flag */
         rem_proto = pjmedia_sdp_transport_get_proto(&m_rem->desc.transport);
         PJMEDIA_TP_PROTO_TRIM_FLAG(rem_proto, PJMEDIA_TP_PROFILE_RTCP_FB);
+#if 1
+		if (rem_proto != PJMEDIA_TP_PROTO_RTP_AVP &&
+	    	rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP &&
+			rem_proto != PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else		
         if (rem_proto != PJMEDIA_TP_PROTO_RTP_AVP &&
             rem_proto != PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
         {
             return PJMEDIA_SRTP_ESDPINTRANSPORT;
         }
 
         /* Also check if peer signal SRTP as mandatory */
+#if 1
+		if (rem_proto == PJMEDIA_TP_PROTO_RTP_SAVP ||
+			rem_proto == PJMEDIA_TP_PROTO_DTLS_SRTP)
+#else		
         if (rem_proto == PJMEDIA_TP_PROTO_RTP_SAVP)
+#endif
             srtp->peer_use = PJMEDIA_SRTP_MANDATORY;
         else
             srtp->peer_use = PJMEDIA_SRTP_OPTIONAL;
