@@ -2103,8 +2103,15 @@ pj_bool_t pjsua_call_on_incoming(pjsip_rx_data *rdata)
      * cause the disconnection callback to be called before on_incoming_call()
      * callback is called, which is not right).
      */
+    
+    // change the answer from 100 trying to 180 ringing for initial INVITE
+#if 0
     status = pjsip_inv_initial_answer(inv, rdata,
-                                      100, NULL, NULL, &response);
+                                     100, NULL, NULL, &response);
+#else
+    status = pjsip_inv_initial_answer(inv, rdata,
+                                      180, NULL, NULL, &response);
+#endif
     if (status != PJ_SUCCESS) {
         if (response == NULL) {
             pjsua_perror(THIS_FILE, "Unable to send answer to incoming INVITE",
