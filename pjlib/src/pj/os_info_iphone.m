@@ -18,7 +18,7 @@
  */
 #include "TargetConditionals.h"
 
-#if !defined TARGET_IPHONE_SIMULATOR || TARGET_IPHONE_SIMULATOR == 0
+#if (!defined TARGET_IPHONE_SIMULATOR || TARGET_IPHONE_SIMULATOR == 0) && !defined(TARGET_OS_WATCH)
 
 #include <pj/os.h>
 #include <pj/string.h>
