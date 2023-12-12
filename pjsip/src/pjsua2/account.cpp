@@ -18,6 +18,7 @@
 #include <pjsua2/account.hpp>
 #include <pjsua2/endpoint.hpp>
 #include <pjsua2/presence.hpp>
+#include <pjsua2/conference.hpp>
 #include <pj/ctype.h>
 #include "util.hpp"
 
@@ -642,6 +643,9 @@ void AccountConfig::toPj(pjsua_acc_config &ret) const
     ret.mwi_enabled             = mwiConfig.enabled;
     ret.mwi_expires             = mwiConfig.expirationSec;
 
+    for (i=0; i<confConfig.headers.size(); ++i) {
+	pj_list_push_back(&ret.conf_sub_hdr_list, &confConfig.headers[i].toPj());
+    }
     // AccountNatConfig
     ret.sip_stun_use            = natConfig.sipStunUse;
     ret.media_stun_use          = natConfig.mediaStunUse;
@@ -1007,6 +1011,10 @@ void Account::shutdown()
             delete b; /* this will remove itself from the list */
         }
 #endif
+	    while(conferenceList.size() > 0) {
+		    Conference *c = conferenceList[0];
+		    delete c; /* this will remove itself from the list */
+		}
 
         // This caused error message of "Error: cannot find Account.."
         // when Endpoint::on_reg_started() is called for unregistration.
@@ -1181,4 +1189,38 @@ void Account::removeBuddy(Buddy *buddy)
 #else
     PJ_UNUSED_ARG(buddy);
 #endif
+}
+const ConferenceVector& Account::enumConferences() const throw(Error)
+{
+    return conferenceList;
+}
+Conference* Account::findConference(string uri, FindConferenceMatch *conference_match) const
+		throw(Error)
+{
+    if (!conference_match) {
+	static FindConferenceMatch def_bm;
+	conference_match = &def_bm;
+    }
+    for (unsigned i = 0; i < conferenceList.size(); i++) {
+	if (conference_match->match(uri, *conferenceList[i]))
+	    return conferenceList[i];
+    }
+    PJSUA2_RAISE_ERROR(PJ_ENOTFOUND);
+}
+void Account::addConference(Conference *conference)
+{
+    pj_assert(conference);
+    conferenceList.push_back(conference);
+}
+void Account::removeConference(Conference *conference)
+{
+    pj_assert(conference);
+    ConferenceVector::iterator it;
+    for (it = conferenceList.begin(); it != conferenceList.end(); it++) {
+	if (*it == conference) {
+	    conferenceList.erase(it);
+	    return;
+	}
+    }
+    pj_assert(!"Bug! Conference to be removed is not in the conference list!");
 }

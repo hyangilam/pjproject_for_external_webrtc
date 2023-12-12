@@ -1428,6 +1428,49 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
 #   define PJSIP_PRES_PIDF_ADD_TIMESTAMP        1
 #endif
 
+/**
+ * Specify the default expiration time for conference event subscription, for
+ * both client and server subscription. For client subscription, application
+ * can override this by specifying positive non-zero value in "expires" 
+ * parameter when calling #pjsip_conf_initiate(). For server subscription,
+ * we would take the expiration value from the Expires header sent by client
+ * in the SUBSCRIBE request if the header exists and its value is less than 
+ * this setting, otherwise this setting will be used.
+ *
+ * Default: 3600 seconds (1 hour)
+ */
+#ifndef PJSIP_CONF_DEFAULT_EXPIRES
+#   define PJSIP_CONF_DEFAULT_EXPIRES		3600
+#endif
+
+
+/**
+ * Specify the status code value to respond to bad message body in NOTIFY
+ * request for conference. Scenarios that are considered bad include non-
+ * PIDF/XML and non-XPIDF/XML body, multipart message bodies without PIDF/XML
+ * nor XPIDF/XML part, and bad (parsing error) PIDF and X-PIDF bodies
+ * themselves.
+ *
+ * Default value is 488. Application may change this to 200 to ignore the
+ * unrecognised content (this is useful if the application wishes to handle
+ * the content itself). Only non-3xx final response code is allowed here.
+ *
+ * Default: 488 (Not Acceptable Here)
+ */
+#ifndef PJSIP_CONF_BAD_CONTENT_RESPONSE
+#   define PJSIP_CONF_BAD_CONTENT_RESPONSE	488
+#endif
+
+
+/**
+ * Add "timestamp" information in generated PIDF document for both server
+ * subscription and conference publication.
+ *
+ * Default: 1 (yes)
+ */
+#ifndef PJSIP_CONF_INFO_ADD_TIMESTAMP
+#   define PJSIP_CONF_INFO_ADD_TIMESTAMP	1
+#endif
 
 /**
  * Default session interval for Session Timer (RFC 4028) extension, in

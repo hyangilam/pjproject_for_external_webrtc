@@ -485,9 +485,20 @@ static void start_timer(pjsip_inv_session *inv)
 
     stop_timer(inv);
 
-    inv->timer->use_update =
-            (pjsip_dlg_remote_has_cap(inv->dlg, PJSIP_H_ALLOW, NULL,
-                                      &UPDATE) == PJSIP_DIALOG_CAP_SUPPORTED);
+	// inv->timer->use_update =
+	//     (pjsip_dlg_remote_has_cap(inv->dlg, PJSIP_H_ALLOW, NULL,
+	// 			      &UPDATE) == PJSIP_DIALOG_CAP_SUPPORTED);
+
+	// 200 OK 에 ALLOW header field 가 없는 경우 에도 UPDATE 로 session refresh 한다
+	pjsip_dialog_cap_status dlg_cap_status = PJSIP_DIALOG_CAP_UNKNOWN;
+	dlg_cap_status = pjsip_dlg_remote_has_cap(inv->dlg, PJSIP_H_ALLOW, NULL,
+				      &UPDATE);
+	if(dlg_cap_status == PJSIP_DIALOG_CAP_SUPPORTED || dlg_cap_status == PJSIP_DIALOG_CAP_UNKNOWN) {
+		inv->timer->use_update = PJ_TRUE;	
+	} else {
+		inv->timer->use_update = PJ_FALSE;	
+	}
+
     if (!inv->timer->use_update) {
         /* INVITE always needs SDP */
         inv->timer->with_sdp = PJ_TRUE;

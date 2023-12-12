@@ -215,6 +215,9 @@ static void usage(void)
     puts  ("Buddy List (can be more than one):");
     puts  ("  --add-buddy url     Add the specified URL to the buddy list.");
     puts  ("");
+	puts  ("Conference List (can be more than one):");
+    puts  ("  --add-conference url     Add the specified URL to the conference list.");
+    puts  ("");
     puts  ("User Agent options:");
     puts  ("  --auto-answer=code  Automatically answer incoming calls with code (e.g. 200)");
     puts  ("  --max-calls=N       Maximum number of concurrent calls (default:4, max:255)");
@@ -1630,7 +1633,8 @@ static void default_config()
 
     for (i=0; i<PJ_ARRAY_SIZE(cfg->buddy_cfg); ++i)
         pjsua_buddy_config_default(&cfg->buddy_cfg[i]);
-
+	for (i=0; i<PJ_ARRAY_SIZE(cfg->conference_cfg); ++i)
+		pjsua_conference_config_default(&cfg->conference_cfg[i]);
     cfg->vid.vcapture_dev = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
     cfg->vid.vrender_dev = PJMEDIA_VID_DEFAULT_RENDER_DEV;
     cfg->aud_cnt = 1;
@@ -2347,6 +2351,13 @@ int write_settings(pjsua_app_config *config, char *buf, pj_size_t max)
                               (int)config->buddy_cfg[i].uri.slen,
                               config->buddy_cfg[i].uri.ptr);
         pj_strcat2(&cfg, line);
+    }
+	
+	for (i=0; i<config->conference_cnt; ++i) {
+		pj_ansi_sprintf(line, "--add-conference %.*s\n",
+			      (int)config->conference_cfg[i].uri.slen,
+			      config->conference_cfg[i].uri.ptr);
+		pj_strcat2(&cfg, line);
     }
 
     /* SIP extensions. */

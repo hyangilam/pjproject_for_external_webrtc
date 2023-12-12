@@ -22,6 +22,7 @@
 #include <pjsua2/account.hpp>
 #include <pjsua2/call.hpp>
 #include <pjsua2/presence.hpp>
+#include <pjsua2/conference.hpp>
 #include <pjsua2/media.hpp>
 #include <pjsua2/json.hpp>
 

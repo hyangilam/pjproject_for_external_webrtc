@@ -83,6 +83,36 @@ PJ_BEGIN_DECL
  */
 #define PJSIP_SIMPLE_EBADRPID       (PJSIP_SIMPLE_ERRNO_START+26)   /*270026*/
 
+/************************************************************
+ * CONFERENCE ERROR
+ ***********************************************************/
+/**
+ * @hideinitializer
+ * Expecting SUBSCRIBE request
+ */
+#define PJSIP_SIMPLE_ENOTCONFSUBSCRIBE  (PJSIP_SIMPLE_ERRNO_START+27)   /*270027*/
+/**
+ * @hideinitializer
+ * No conference associated with subscription
+ */
+#define PJSIP_SIMPLE_ENOCONFERENCE    (PJSIP_SIMPLE_ERRNO_START+28)   /*270028*/
+/**
+ * @hideinitializer
+ * No conference info in server subscription
+ */
+#define PJSIP_SIMPLE_ENOCONFERENCEINFO (PJSIP_SIMPLE_ERRNO_START+29)  /*270029*/
+/**
+ * @hideinitializer
+ * Bad Content-Type
+ */
+#define PJSIP_SIMPLE_EBADCONFCONTENT    (PJSIP_SIMPLE_ERRNO_START+30)   /*270030*/
+/**
+ * @hideinitializer
+ * Bad CONFERENCE-INFO Message
+ */
+#define PJSIP_SIMPLE_EBADCONFERENCEINFO	    (PJSIP_SIMPLE_ERRNO_START+31)   /*270031*/
+
+#define PJSIP_SIMPLE_EBADCONFERENCEINFOVERSION		(PJSIP_SIMPLE_ERRNO_START+32)   /*270032*/
 
 /************************************************************
  * ISCOMPOSING ERRORS

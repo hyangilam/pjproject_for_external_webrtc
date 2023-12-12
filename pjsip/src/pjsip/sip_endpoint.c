@@ -374,6 +374,7 @@ PJ_DEF(pj_status_t) pjsip_endpt_add_capability( pjsip_endpoint *endpt,
     PJ_ASSERT_RETURN(count <= PJSIP_GENERIC_ARRAY_MAX_COUNT, PJ_ETOOMANY);
     PJ_ASSERT_RETURN(htype==PJSIP_H_ACCEPT || 
                      htype==PJSIP_H_ALLOW ||
+             		 htype==PJSIP_H_ALLOW_EVENTS ||
                      htype==PJSIP_H_SUPPORTED,
                      PJ_EINVAL);
 
@@ -390,6 +391,9 @@ PJ_DEF(pj_status_t) pjsip_endpt_add_capability( pjsip_endpoint *endpt,
         case PJSIP_H_ALLOW:
             hdr = pjsip_allow_hdr_create(endpt->pool);
             break;
+	    case PJSIP_H_ALLOW_EVENTS:
+	        hdr = pjsip_allow_events_hdr_create(endpt->pool);
+	        break;
         case PJSIP_H_SUPPORTED:
             hdr = pjsip_supported_hdr_create(endpt->pool);
             break;

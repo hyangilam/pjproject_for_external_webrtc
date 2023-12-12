@@ -60,21 +60,22 @@ typedef struct pjsip_event_hdr
 PJ_DECL(pjsip_event_hdr*) pjsip_event_hdr_create(pj_pool_t *pool);
 
 
-/**
- * This structure describes Allow-Events header.
- */
-typedef pjsip_generic_array_hdr pjsip_allow_events_hdr;
+// conference : move to sip_msg.h
+// /**
+//  * This structure describes Allow-Events header.
+//  */
+// typedef pjsip_generic_array_hdr pjsip_allow_events_hdr;
 
 
-/**
- * Create a new Allow-Events header.
- *
- * @param pool      The pool.
- *
- * @return          Allow-Events header.
- */
-PJ_DECL(pjsip_allow_events_hdr*) 
-pjsip_allow_events_hdr_create(pj_pool_t *pool);
+// /**
+//  * Create a new Allow-Events header.
+//  *
+//  * @param pool	    The pool.
+//  *
+//  * @return	    Allow-Events header.
+//  */
+// PJ_DECL(pjsip_allow_events_hdr*) 
+// pjsip_allow_events_hdr_create(pj_pool_t *pool);
 
 
 /**

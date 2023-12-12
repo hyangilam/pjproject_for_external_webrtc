@@ -303,6 +303,7 @@ void CallInfo::fromPj(const pjsua_call_info &pci)
     localContact        = pj2Str(pci.local_contact);
     remoteUri           = pj2Str(pci.remote_info);
     remoteContact       = pj2Str(pci.remote_contact);
+    remoteIsFocus       = pci.remote_isfocus;
     callIdString        = pj2Str(pci.call_id);
     setting.fromPj(pci.setting);
     state               = pci.state;

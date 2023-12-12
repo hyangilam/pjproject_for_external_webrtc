@@ -41,5 +41,7 @@
 #include <pjsip-simple/pidf.h>
 #include <pjsip-simple/publish.h>
 #include <pjsip-simple/xpidf.h>
+#include <pjsip-simple/conference.h>
+#include <pjsip-simple/conference_info.h>
 
 #endif  /* __PJSIP_SIMPLE_H__ */

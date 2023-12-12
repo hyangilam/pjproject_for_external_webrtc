@@ -267,6 +267,9 @@ typedef int pjsua_acc_id;
 /** Buddy identification */
 typedef int pjsua_buddy_id;
 
+/** Conference identification */
+typedef int pjsua_conference_id;
+
 /** File player identification */
 typedef int pjsua_player_id;
 
@@ -1648,6 +1651,12 @@ typedef struct pjsua_callback
     void (*on_buddy_evsub_state)(pjsua_buddy_id buddy_id,
                                  pjsip_evsub *sub,
                                  pjsip_event *event);
+
+    void (*on_conference_state)(pjsua_conference_id conference_id);
+    void (*on_conference_evsub_state)(pjsua_conference_id conference_id,
+                pjsip_evsub *sub,
+                pjsip_event *event);
+
 
     /**
      * Notify application on incoming pager (i.e. MESSAGE request).
@@ -3882,7 +3891,13 @@ typedef struct pjsua_acc_config
      * The optional custom SIP headers to be put in the presence
      * subscription request.
      */
-    pjsip_hdr       sub_hdr_list;
+    pjsip_hdr	    sub_hdr_list;
+
+    /** 
+     * The optional custom SIP headers to be put in the conference
+     * subscription request.
+     */
+    pjsip_hdr	    conf_sub_hdr_list;
 
     /**
      * Subscribe to message waiting indication events (RFC 3842).
@@ -5245,6 +5260,8 @@ typedef struct pjsua_call_info
 
     /** Remote contact */
     pj_str_t            remote_contact;
+
+    pj_bool_t       remote_isfocus;
 
     /** Dialog Call-ID string. */
     pj_str_t            call_id;
@@ -6761,6 +6778,429 @@ PJ_DECL(pj_status_t) pjsua_im_typing(pjsua_acc_id acc_id,
                                      pj_bool_t is_typing,
                                      const pjsua_msg_data *msg_data);
 
+
+
+/**
+ * @}
+ */
+
+/*****************************************************************************
+ * CONFERENCE API
+ */
+
+/**
+ * @defgroup PJSUA_LIB_CONFERENCE PJSUA-API Conference and Conference-info
+ * @ingroup PJSUA_LIB
+ * @brief Conference management, Conference-info.
+ * @{
+ *
+ * This section describes PJSUA-APIs related to conferences management,
+ * and conference-info management.
+ */
+
+/**
+ * Max conferences
+ */
+#ifndef PJSUA_MAX_CONFERENCES
+#   define PJSUA_MAX_CONFERENCES	    4
+#endif
+
+
+/**
+ * This specifies how long the library should wait before retrying failed
+ * SUBSCRIBE request, and there is no rule to automatically resubscribe 
+ * (for example, no "retry-after" parameter in Subscription-State header).
+ *
+ * This also controls the duration  before failed PUBLISH request will be
+ * retried.
+ *
+ * Default: 300 seconds
+ */
+#ifndef PJSUA_CONFERENCE_TIMER
+#   define PJSUA_CONFERENCE_TIMER	    300
+#endif
+
+
+/**
+ * This structure describes conference configuration when adding a conference to
+ * the conference list with #pjsua_conference_add(). Application MUST initialize
+ * the structure with #pjsua_conference_config_default() to initialize this
+ * structure with default configuration.
+ */
+typedef struct pjsua_conference_config
+{
+    /**
+     * Conference URL or name address.
+     */
+    pj_str_t	uri;
+
+    /**
+     * Specify whether conference subscription should start immediately.
+     */
+    pj_bool_t	subscribe;
+
+    /**
+     * Specify arbitrary application data to be associated with with
+     * the conference object.
+     */
+    void       *user_data;
+
+} pjsua_conference_config;
+
+
+/**
+ * This enumeration describes basic conference's online status.
+ */
+typedef enum pjsua_conference_status
+{
+    /**
+     * Online status is unknown (possibly because no conference subscription
+     * has been established).
+     */
+    PJSUA_CONFERENCE_STATUS_UNKNOWN,
+
+    // /**
+    //  * Conference is known to be online.
+    //  */
+    // PJSUA_CONFERENCE_STATUS_ONLINE,
+
+    // /**
+    //  * Conference is offline.
+    //  */
+    // PJSUA_CONFERENCE_STATUS_OFFLINE,
+
+    PJSUA_CONFERENCE_STATUS_SUBSCRIBING,
+    PJSUA_CONFERENCE_STATUS_UNSUBSCRIBED
+
+} pjsua_conference_status;
+
+
+
+/**
+ * This structure describes conference info, which can be retrieved by calling
+ * #pjsua_conference_get_info().
+ */
+typedef struct pjsua_conference_info
+{
+    /**
+     * The conference ID.
+     */
+    pjsua_conference_id	id;
+
+    /**
+     * The full URI of the conference, as specified in the configuration.
+     */
+    pj_str_t		uri;
+
+    /**
+     * Conference's Contact, only available when conference subscription has
+     * been established to the conference.
+     */
+    pj_str_t		contact;
+
+    /**
+     * Conference's online status.
+     */
+    pjsua_conference_status	status;
+
+    /**
+     * Text to describe conference's online status.
+     */
+    pj_str_t		status_text;
+
+    /**
+     * Flag to indicate that we should monitor the conference information for
+     * this conference (normally yes, unless explicitly disabled).
+     */
+    pj_bool_t		monitor_conf;
+
+    /**
+     * If \a monitor_pres is enabled, this specifies the last state of the
+     * conference subscription. If conference subscription session is currently
+     * active, the value will be PJSIP_EVSUB_STATE_ACTIVE. If conference
+     * subscription request has been rejected, the value will be
+     * PJSIP_EVSUB_STATE_TERMINATED, and the termination reason will be
+     * specified in \a sub_term_reason.
+     */
+    pjsip_evsub_state	sub_state;
+
+    /**
+     * String representation of subscription state.
+     */
+    const char	       *sub_state_name;
+
+    /**
+     * Specifies the last conference subscription termination code. This would
+     * return the last status of the SUBSCRIBE request. If the subscription
+     * is terminated with NOTIFY by the server, this value will be set to
+     * 200, and subscription termination reason will be given in the
+     * \a sub_term_reason field.
+     */
+    unsigned		sub_term_code;
+
+    /**
+     * Specifies the last conference subscription termination reason. If 
+     * conference subscription is currently active, the value will be empty.
+     */
+    pj_str_t		sub_term_reason;
+
+    // /**
+    //  * Extended RPID information about the person.
+    //  */
+    // pjrpid_element	rpid;
+
+    // /**
+    //  * Extended presence info.
+    //  */
+    // pjsip_conf_status	conf_status;    // SHOULD be removed
+
+    // pjsip - conference
+    pjsip_conf_type    conf_info;
+
+    /**
+     * Internal buffer.
+     */
+    char		buf_[512];
+
+} pjsua_conference_info;
+
+
+/**
+ * Set default values to the conference config.
+ */
+PJ_DECL(void) pjsua_conference_config_default(pjsua_conference_config *cfg);
+
+
+/**
+ * Get total number of buddies.
+ *
+ * @return		Number of buddies.
+ */
+PJ_DECL(unsigned) pjsua_get_conference_count(void);
+
+
+/**
+ * Check if conference ID is valid.
+ *
+ * @param conference_id	Conference ID to check.
+ *
+ * @return		Non-zero if conference ID is valid.
+ */
+PJ_DECL(pj_bool_t) pjsua_conference_is_valid(pjsua_conference_id conference_id);
+
+
+/**
+ * Enumerate all conference IDs in the conference list. Application then can use
+ * #pjsua_conference_get_info() to get the detail information for each conference
+ * id.
+ *
+ * @param ids		Array of ids to be initialized.
+ * @param count		On input, specifies max elements in the array.
+ *			On return, it contains actual number of elements
+ *			that have been initialized.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_enum_conferences(pjsua_conference_id ids[],
+					unsigned *count);
+
+/**
+ * Find the conference ID with the specified URI.
+ *
+ * @param uri		The conference URI.
+ *
+ * @return		The conference ID, or PJSUA_INVALID_ID if not found.
+ */
+PJ_DECL(pjsua_conference_id) pjsua_conference_find(const pj_str_t *uri);
+
+
+/**
+ * Get detailed conference info.
+ *
+ * @param conference_id	The conference identification.
+ * @param info		Pointer to receive information about conference.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_conference_get_info(pjsua_conference_id conference_id,
+					  pjsua_conference_info *info);
+
+/**
+ * Set the user data associated with the conference object.
+ *
+ * @param conference_id	The conference identification.
+ * @param user_data	Arbitrary application data to be associated with
+ *			the conference object.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_conference_set_user_data(pjsua_conference_id conference_id,
+					       void *user_data);
+
+
+/**
+ * Get the user data associated with the budy object.
+ *
+ * @param conference_id	The conference identification.
+ *
+ * @return		The application data.
+ */
+PJ_DECL(void*) pjsua_conference_get_user_data(pjsua_conference_id conference_id);
+
+
+/**
+ * Add new conference to the conference list. If conference subscription is enabled
+ * for this conference, this function will also start the conference subscription
+ * session immediately.
+ *
+ * @param conference_cfg	Conference configuration.
+ * @param p_conference_id	Pointer to receive conference ID.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_conference_add(const pjsua_conference_config *conference_cfg,
+				     pjsua_conference_id *p_conference_id);
+
+
+/**
+ * Delete the specified conference from the conference list. Any conference subscription
+ * to this conference will be terminated.
+ *
+ * @param conference_id	Conference identification.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_conference_del(pjsua_conference_id conference_id);
+
+
+/**
+ * Enable/disable conference's conference monitoring. Once conference's conference is
+ * subscribed, application will be informed about conference's conference status
+ * changed via \a on_conference_state() callback.
+ *
+ * @param conference_id	Conference identification.
+ * @param subscribe	Specify non-zero to activate conference subscription to
+ *			the specified conference.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_conference_subscribe_conf(pjsua_conference_id conference_id,
+						pj_bool_t subscribe);
+
+
+/**
+ * Update the conference information for the conference. Although the library
+ * periodically refreshes the conference subscription for all buddies, some
+ * application may want to refresh the conference's conference subscription
+ * immediately, and in this case it can use this function to accomplish
+ * this.
+ *
+ * Note that the conference's conference subscription will only be initiated
+ * if conference monitoring is enabled for the conference. See 
+ * #pjsua_conference_subscribe_pres() for more info. Also if conference subscription
+ * for the conference is already active, this function will not do anything.
+ *
+ * Once the conference subscription is activated successfully for the conference,
+ * application will be notified about the conference's conference status in the
+ * on_conference_state() callback.
+ *
+ * @param conference_id	Conference identification.
+ *
+ * @return		PJ_SUCCESS on success, or the appropriate error code.
+ */
+PJ_DECL(pj_status_t) pjsua_conference_update_conf(pjsua_conference_id conference_id);
+
+
+/**
+ * Send NOTIFY to inform account presence status or to terminate server
+ * side presence subscription. If application wants to reject the incoming
+ * request, it should set the \a state to PJSIP_EVSUB_STATE_TERMINATED.
+ *
+ * @param acc_id	Account ID.
+ * @param srv_pres	Server presence subscription instance.
+ * @param state		New state to set.
+ * @param state_str	Optionally specify the state string name, if state
+ *			is not "active", "pending", or "terminated".
+ * @param reason	If the new state is PJSIP_EVSUB_STATE_TERMINATED,
+ *			optionally specify the termination reason. 
+ * @param with_body	If the new state is PJSIP_EVSUB_STATE_TERMINATED,
+ *			this specifies whether the NOTIFY request should
+ *			contain message body containing account's presence
+ *			information.
+ * @param msg_data	Optional list of headers to be sent with the NOTIFY
+ *			request.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjsua_conf_notify(pjsua_acc_id acc_id,
+				       pjsua_srv_pres *srv_pres,
+				       pjsip_evsub_state state,
+				       const pj_str_t *state_str,
+				       const pj_str_t *reason,
+				       pj_bool_t with_body,
+				       const pjsua_msg_data *msg_data);
+
+/**
+ * Dump conference subscriptions to log.
+ *
+ * @param verbose	Yes or no.
+ */
+PJ_DECL(void) pjsua_conf_dump(pj_bool_t verbose);
+
+
+// /**
+//  * The MESSAGE method (defined in pjsua_im.c)
+//  */
+// extern const pjsip_method pjsip_message_method;
+
+
+// /**
+//  * The INFO method (defined in pjsua_call.c)
+//  */
+// extern const pjsip_method pjsip_info_method;
+
+
+// /**
+//  * Send instant messaging outside dialog, using the specified account for
+//  * route set and authentication.
+//  *
+//  * @param acc_id	Account ID to be used to send the request.
+//  * @param to		Remote URI.
+//  * @param mime_type	Optional MIME type. If NULL, then "text/plain" is 
+//  *			assumed.
+//  * @param content	The message content.
+//  * @param msg_data	Optional list of headers etc to be included in outgoing
+//  *			request. The body descriptor in the msg_data is 
+//  *			ignored.
+//  * @param user_data	Optional user data, which will be given back when
+//  *			the IM callback is called.
+//  *
+//  * @return		PJ_SUCCESS on success, or the appropriate error code.
+//  */
+// PJ_DECL(pj_status_t) pjsua_im_send(pjsua_acc_id acc_id, 
+// 				   const pj_str_t *to,
+// 				   const pj_str_t *mime_type,
+// 				   const pj_str_t *content,
+// 				   const pjsua_msg_data *msg_data,
+// 				   void *user_data);
+
+
+// /**
+//  * Send typing indication outside dialog.
+//  *
+//  * @param acc_id	Account ID to be used to send the request.
+//  * @param to		Remote URI.
+//  * @param is_typing	If non-zero, it tells remote person that local person
+//  *			is currently composing an IM.
+//  * @param msg_data	Optional list of headers etc to be added to outgoing
+//  *			request.
+//  *
+//  * @return		PJ_SUCCESS on success, or the appropriate error code.
+//  */
+// PJ_DECL(pj_status_t) pjsua_im_typing(pjsua_acc_id acc_id, 
+// 				     const pj_str_t *to, 
+// 				     pj_bool_t is_typing,
+// 				     const pjsua_msg_data *msg_data);
 
 
 /**

@@ -91,6 +91,8 @@ typedef struct pjsua_app_config
     unsigned                buddy_cnt;
     pjsua_buddy_config      buddy_cfg[PJSUA_MAX_BUDDIES];
 
+    unsigned		    conference_cnt;
+    pjsua_conference_config	    conference_cfg[PJSUA_MAX_CONFERENCES];
     app_call_data           call_data[PJSUA_MAX_CALLS];
 
     pj_pool_t              *pool;

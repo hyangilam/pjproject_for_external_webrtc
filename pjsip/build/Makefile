@@ -98,7 +98,8 @@ export PJSIP_SIMPLE_SRCDIR = ../src/pjsip-simple
 export PJSIP_SIMPLE_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			errno.o evsub.o evsub_msg.o iscomposing.o \
 			mwi.o pidf.o presence.o presence_body.o publishc.o \
-			rpid.o xpidf.o
+			rpid.o xpidf.o \
+			conference.o conference_body.o conference_info.o
 export PJSIP_SIMPLE_CFLAGS += $(_CFLAGS)
 export PJSIP_SIMPLE_CXXFLAGS += $(_CXXFLAGS)
 export PJSIP_SIMPLE_LDFLAGS += $(PJSIP_LDLIB) \
@@ -114,7 +115,8 @@ export PJSUA_LIB_SRCDIR = ../src/pjsua-lib
 export PJSUA_LIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			pjsua_acc.o pjsua_call.o pjsua_core.o \
 			pjsua_im.o pjsua_media.o pjsua_pres.o \
-			pjsua_dump.o pjsua_aud.o pjsua_vid.o
+			pjsua_dump.o pjsua_aud.o pjsua_vid.o \
+			pjsua_conf.o
 export PJSUA_LIB_CFLAGS += $(_CFLAGS) $(PJ_VIDEO_CFLAGS)
 export PJSUA_LIB_CXXFLAGS += $(_CXXFLAGS) $(PJ_VIDEO_CFLAGS)
 export PJSUA_LIB_LDFLAGS += $(PJSIP_UA_LDLIB) \
@@ -138,7 +140,7 @@ export CC_OUT CC AR RANLIB HOST_MV HOST_RM HOST_RMDIR HOST_MKDIR OBJEXT LD LDOUT
 export PJSUA2_LIB_SRCDIR = ../src/pjsua2
 export PJSUA2_LIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			   account.o endpoint.o json.o persistent.o types.o \
-			   siptypes.o call.o presence.o media.o
+			   siptypes.o call.o presence.o media.o conference.o
 export PJSUA2_LIB_CFLAGS += $(_CFLAGS) $(PJ_VIDEO_CFLAGS)
 export PJSUA2_LIB_CXXFLAGS = $(_CXXFLAGS) $(PJSUA2_LIB_CFLAGS)
 export PJSUA2_LIB_LDFLAGS += $(PJSUA_LIB_LDLIB) \

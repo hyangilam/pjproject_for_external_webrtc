@@ -45,6 +45,15 @@ static const struct
     { PJSIP_SIMPLE_EBADXPIDF,       "Bad XPIDF content for presence" },
     { PJSIP_SIMPLE_EBADRPID,        "Invalid or bad RPID document"},
 
+	/* Conference error */
+	{ PJSIP_SIMPLE_ENOTCONFSUBSCRIBE,   "conference Expecting SUBSCRIBE request" },
+    { PJSIP_SIMPLE_ENOCONFERENCE,	    "No conference associated with the subscription" },
+    { PJSIP_SIMPLE_ENOCONFERENCEINFO, "No conference info in the server subscription" },
+    { PJSIP_SIMPLE_EBADCONFCONTENT,	    "Bad Content-Type for conference" },
+    { PJSIP_SIMPLE_EBADCONFERENCEINFO,	    "Bad conference-info content for conference" },
+	{ PJSIP_SIMPLE_EBADCONFERENCEINFOVERSION,	    "conference-info version mismatch. discard document" },
+	
+
     /* isComposing errors. */
     { PJSIP_SIMPLE_EBADISCOMPOSE,   "Bad isComposing indication/XML message" },
 };

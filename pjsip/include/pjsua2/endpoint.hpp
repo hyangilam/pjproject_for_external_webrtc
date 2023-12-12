@@ -2041,6 +2041,10 @@ private:
     static void on_buddy_evsub_state(pjsua_buddy_id buddy_id,
                                      pjsip_evsub *sub,
                                      pjsip_event *event);
+    static void on_conference_state(pjsua_conference_id conference_id);
+    static void on_conference_evsub_state(pjsua_conference_id conference_id,
+				     pjsip_evsub *sub,
+				     pjsip_event *event);
     // Call callbacks
     static void on_call_state(pjsua_call_id call_id, pjsip_event *e);
     static void on_call_tsx_state(pjsua_call_id call_id,

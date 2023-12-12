@@ -133,6 +133,17 @@ PJ_DEF(void) pjsua_acc_config_dup( pj_pool_t *pool,
         }
     }
 
+    pj_list_init(&dst->conf_sub_hdr_list);
+    if (!pj_list_empty(&src->conf_sub_hdr_list)) {
+        const pjsip_hdr *hdr;
+
+        hdr = src->conf_sub_hdr_list.next;
+        while (hdr != &src->conf_sub_hdr_list) {
+            pj_list_push_back(&dst->conf_sub_hdr_list, pjsip_hdr_clone(pool, hdr));
+            hdr = hdr->next;
+        }
+    }
+
     pjsip_auth_clt_pref_dup(pool, &dst->auth_pref, &src->auth_pref);
 
     pjsua_transport_config_dup(pool, &dst->rtp_cfg, &src->rtp_cfg);
@@ -917,6 +928,8 @@ PJ_DEF(pj_status_t) pjsua_acc_modify( pjsua_acc_id acc_id,
 
     /* SUBSCRIBE header list */
     update_hdr_list(acc->pool, &acc->cfg.sub_hdr_list, &cfg->sub_hdr_list);
+
+    update_hdr_list(acc->pool, &acc->cfg.conf_sub_hdr_list, &cfg->conf_sub_hdr_list);
 
     /* Global outbound proxy */
     global_route_crc = calc_proxy_crc(pjsua_var.ua_cfg.outbound_proxy, 

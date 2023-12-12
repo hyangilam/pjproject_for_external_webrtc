@@ -259,6 +259,15 @@ struct pjsua_srv_pres
                                          if not present.                    */
 };
 
+struct pjsua_srv_conf
+{
+    PJ_DECL_LIST_MEMBER(struct pjsua_srv_conf);
+    pjsip_evsub	    *sub;	    /**< The evsub.			    */
+    char	    *remote;	    /**< Remote URI.			    */
+    int		     acc_id;	    /**< Account ID.			    */
+    pjsip_dialog    *dlg;	    /**< Dialog.			    */
+    int		     expires;	    /**< "expires" value in the request.    */
+};
 /**
  * Account
  */
@@ -384,6 +393,29 @@ typedef struct pjsua_buddy
     pj_timer_entry       timer;     /**< Resubscription timer           */
 } pjsua_buddy;
 
+/** Maximum length of subscription termination reason. */
+#define PJSUA_CONFERENCE_SUB_TERM_REASON_LEN	    32
+
+typedef struct pjsua_conference
+{
+    pj_pool_t		*pool;	    /**< Pool for this buddy.		*/
+    unsigned		 index;	    /**< Buddy index.			*/
+    void		*user_data; /**< Application data.		*/
+    pj_str_t		 uri;	    /**< Buddy URI.			*/
+    pj_str_t		 contact;   /**< Contact learned from subscrp.	*/
+    pj_str_t		 name;	    /**< Buddy name.			*/
+    pj_str_t		 display;   /**< Buddy display name.		*/
+    pj_str_t		 host;	    /**< Buddy host.			*/
+    unsigned		 port;	    /**< Buddy port.			*/
+    pj_bool_t		 monitor;   /**< Should we monitor?		*/
+    pjsip_dialog	*dlg;	    /**< The underlying dialog.		*/
+    pjsip_evsub		*sub;	    /**< Buddy presence subscription	*/
+    unsigned		 term_code; /**< Subscription termination code	*/
+    pj_str_t		 term_reason;/**< Subscription termination reason */
+
+    pjsip_conf_type     conf_info;
+    pj_timer_entry	 timer;	    /**< Resubscription timer		*/
+} pjsua_conference;
 
 /**
  * File player/recorder data.
@@ -539,6 +571,12 @@ struct pjsua_data
 
     /* Presence: */
     pj_timer_entry       pres_timer;/**< Presence refresh timer.        */
+
+    /* Conference: */
+    unsigned        conference_cnt;           /**< Conference count.  */
+    pjsua_conference  conference[PJSUA_MAX_CONFERENCES];     /**< Conference array. */
+    pj_timer_entry  conf_timer;/**< Confrenece refresh timer. */
+
 
     /* Media: */
     pjsua_media_config   media_cfg; /**< Media config.                  */
@@ -843,6 +881,32 @@ pj_status_t pjsua_im_init(void);
  * Start MWI subscription
  */
 pj_status_t pjsua_start_mwi(pjsua_acc_id acc_id, pj_bool_t force_renew);
+
+/**
+ * Init conference.
+ */
+pj_status_t pjsua_conf_init();
+
+/*
+ * Start conference subsystem.
+ */
+pj_status_t pjsua_conf_start(void);
+
+/**
+ * Refresh conference subscriptions
+ */
+void pjsua_conf_refresh(void);
+
+/*
+ * Update server subscription (e.g. when our online status has changed)
+ */
+void pjsua_conf_update_acc(int acc_id, pj_bool_t force);
+
+/*
+ * Shutdown conference.
+ */
+void pjsua_conf_shutdown(unsigned flags);
+
 
 /**
  * Init call subsystem.

@@ -140,6 +140,7 @@ const pjsip_hdr_name_info_t pjsip_hdr_names[] =
     { "Via",                 3, "v" },    // PJSIP_H_VIA,
     { "Warning",             7, NULL },   // PJSIP_H_WARNING,
     { "WWW-Authenticate",   16, NULL },   // PJSIP_H_WWW_AUTHENTICATE,
+	{ "Allow-Events",       12, NULL },   // PJSIP_H_ALLOW_EVENTS
 
     { "_Unknown-Header",    15, NULL },   // PJSIP_H_OTHER,
 };
@@ -1046,6 +1047,29 @@ PJ_DEF(pjsip_allow_hdr*) pjsip_allow_hdr_create(pj_pool_t *pool)
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
+ * Allow-Events header.
+ */
+
+PJ_DEF(pjsip_allow_events_hdr*) pjsip_allow_events_hdr_init( pj_pool_t *pool,
+					       void *mem )
+{
+    pjsip_allow_events_hdr *hdr = (pjsip_allow_events_hdr*) mem;
+
+    PJ_UNUSED_ARG(pool);
+
+    init_hdr(hdr, PJSIP_H_ALLOW_EVENTS, &generic_array_hdr_vptr);
+    hdr->count = 0;
+    return hdr;
+}
+
+PJ_DEF(pjsip_allow_events_hdr*) pjsip_allow_events_hdr_create(pj_pool_t *pool)
+{
+    void *mem = pj_pool_alloc(pool, sizeof(pjsip_allow_events_hdr));
+    return pjsip_allow_events_hdr_init(pool, mem);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
  * Call-ID header.
  */
 
@@ -1313,6 +1337,13 @@ static int pjsip_contact_hdr_print( pjsip_contact_hdr *hdr, char *buf,
             buf += printed + 9;
         }
 
+	    if (hdr->isfocus == PJ_TRUE) {
+		    if (buf+13 >= endbuf)
+			return -1;
+
+		    pj_memcpy(buf, ";isfocus", 8);
+		    buf += 8;
+		}
         printed = (int)pjsip_param_print_on(&hdr->other_param, buf, endbuf-buf,
                                             &pc->pjsip_TOKEN_SPEC,
                                             &pc->pjsip_TOKEN_SPEC, 
@@ -1337,6 +1368,7 @@ static pjsip_contact_hdr* pjsip_contact_hdr_clone(pj_pool_t *pool,
     hdr->uri = (pjsip_uri*) pjsip_uri_clone(pool, rhs->uri);
     hdr->q1000 = rhs->q1000;
     hdr->expires = rhs->expires;
+    hdr->isfocus = rhs->isfocus;
     pjsip_param_clone(pool, &hdr->other_param, &rhs->other_param);
     return hdr;
 }

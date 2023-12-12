@@ -111,6 +111,7 @@ static pjsip_parser_const_t pconst =
     { "received", 8 },  /* pjsip_RECEIVED_STR   */
     { "q", 1 },         /* pjsip_Q_STR          */
     { "expires", 7 },   /* pjsip_EXPIRES_STR    */
+    { "isfocus", 7 },	/* pjsip_ISFOCUS_STR	*/
     { "tag", 3 },       /* pjsip_TAG_STR        */
     { "rport", 5}       /* pjsip_RPORT_STR      */
 };
@@ -167,6 +168,7 @@ static void         parse_hdr_end( pj_scanner *scanner );
 
 static pjsip_hdr*   parse_hdr_accept( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_allow( pjsip_parse_ctx *ctx );
+static pjsip_hdr*   parse_hdr_allow_events( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_call_id( pjsip_parse_ctx *ctx);
 static pjsip_hdr*   parse_hdr_contact( pjsip_parse_ctx *ctx);
 static pjsip_hdr*   parse_hdr_content_len( pjsip_parse_ctx *ctx );
@@ -476,6 +478,9 @@ static pj_status_t init_parser()
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( "Allow", NULL, &parse_hdr_allow);
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+
+    status = pjsip_register_hdr_parser( "Allow-Events", NULL, &parse_hdr_allow_events);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( "Call-ID", "i", &parse_hdr_call_id);
@@ -1850,6 +1855,14 @@ static pjsip_hdr* parse_hdr_allow(pjsip_parse_ctx *ctx)
     return (pjsip_hdr*)allow;
 }
 
+/* Parse Allow-Events header. */
+static pjsip_hdr* parse_hdr_allow_events(pjsip_parse_ctx *ctx)
+{
+    pjsip_allow_events_hdr *allow_events = pjsip_allow_events_hdr_create(ctx->pool);
+    parse_generic_array_hdr(allow_events, ctx->scanner);
+    return (pjsip_hdr*)allow_events;
+}
+
 /* Parse Call-ID header. */
 static pjsip_hdr* parse_hdr_call_id(pjsip_parse_ctx *ctx)
 {
@@ -1910,6 +1923,8 @@ static void int_parse_contact_param( pjsip_contact_hdr *hdr,
             if (hdr->expires < PJSIP_MIN_EXPIRES)
                 hdr->expires = PJSIP_MIN_EXPIRES;
 #endif
+    	} else if (!parser_stricmp(pname, pconst.pjsip_ISFOCUS_STR) ) {
+        	hdr->isfocus = PJ_TRUE;
         } else {
             pjsip_param *p = PJ_POOL_ALLOC_T(pool, pjsip_param);
             p->name = pname;

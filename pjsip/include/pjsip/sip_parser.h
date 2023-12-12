@@ -380,6 +380,7 @@ typedef struct pjsip_parser_const_t
     const pj_str_t pjsip_RECEIVED_STR;  /**< "received" string const.   */
     const pj_str_t pjsip_Q_STR;         /**< "q" string constant.       */
     const pj_str_t pjsip_EXPIRES_STR;   /**< "expires" string constant. */
+    const pj_str_t pjsip_ISFOCUS_STR;   /**< "isfocus" string constant. */
     const pj_str_t pjsip_TAG_STR;       /**< "tag" string constant.     */
     const pj_str_t pjsip_RPORT_STR;     /**< "rport" string const.      */
 

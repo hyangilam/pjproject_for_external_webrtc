@@ -248,7 +248,7 @@ typedef enum pjsip_hdr_e
     PJSIP_H_VIA,
     PJSIP_H_WARNING_UNIMP,              /* N/A, use pjsip_generic_string_hdr */
     PJSIP_H_WWW_AUTHENTICATE,
-
+    PJSIP_H_ALLOW_EVENTS,
     PJSIP_H_OTHER
 
 } pjsip_hdr_e;
@@ -1307,6 +1307,40 @@ PJ_DECL(pjsip_allow_hdr*) pjsip_allow_hdr_create(pj_pool_t *pool);
  */
 PJ_DECL(pjsip_allow_hdr*) pjsip_allow_hdr_init( pj_pool_t *pool,
                                                 void *mem );
+/* **************************************************************************/
+/**
+ * Allow-Events header.
+ */
+typedef pjsip_generic_array_hdr pjsip_allow_events_hdr;
+
+/**
+ * Create new Allow-Events header instance.
+ *
+ * @param pool	    The pool.
+ *
+ * @return	    New Allow-Events header instance.
+ */
+PJ_DECL(pjsip_allow_events_hdr*) pjsip_allow_events_hdr_create(pj_pool_t *pool);
+
+
+
+/**
+ * Initialize a preallocated memory with the header structure. This function
+ * should only be called when application uses its own memory allocation to
+ * allocate memory block for the specified header (e.g. in C++, when the 
+ * header is allocated with "new" operator).
+ * For normal applications, they should use pjsip_xxx_hdr_create() instead,
+ * which allocates memory and initialize it in one go.
+ *
+ * @param pool	    Pool for additional memory allocation if required.
+ * @param mem	    Pre-allocated memory to be initialized as the header.
+ *
+ * @return	    The header instance, which points to the same memory 
+ *		    location as the mem argument.
+ */
+PJ_DECL(pjsip_allow_events_hdr*) pjsip_allow_events_hdr_init( pj_pool_t *pool,
+						void *mem );
+
 
 /* **************************************************************************/
 
@@ -1443,6 +1477,7 @@ typedef struct pjsip_contact_hdr
     pj_uint32_t     expires;        /**< Expires parameter, otherwise
                                          PJSIP_EXPIRES_NOT_SPECIFIED
                                          if not present.                    */
+    pj_bool_t   	isfocus;    	/**< isfocus parameter, otherwise false if not present. */
     pjsip_param     other_param;    /**< Other parameters, concatenated in
                                          a single string.                   */
 } pjsip_contact_hdr;

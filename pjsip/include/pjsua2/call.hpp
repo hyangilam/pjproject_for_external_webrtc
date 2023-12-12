@@ -471,6 +471,7 @@ struct CallInfo
      * Remote contact
      */
     string              remoteContact;
+    bool        		remoteIsFocus;
     
     /**
      * Dialog Call-ID string.

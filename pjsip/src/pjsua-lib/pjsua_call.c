@@ -2378,6 +2378,13 @@ PJ_DEF(pj_status_t) pjsua_call_get_info( pjsua_call_id call_id,
         info->remote_contact.slen = 0;
     }
 
+    /* remote isfocus */
+    if (dlg->remote.contact && ((dlg->remote.contact)->isfocus == PJ_TRUE)) {
+        info->remote_isfocus = PJ_TRUE;
+    } else {
+        info->remote_isfocus = PJ_FALSE;
+    }
+    
     /* call id */
     info->call_id.ptr = info->buf_.call_id;
     pj_strncpy(&info->call_id, &dlg->call_id->id,

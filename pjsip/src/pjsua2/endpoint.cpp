@@ -19,6 +19,7 @@
 #include <pjsua2/account.hpp>
 #include <pjsua2/call.hpp>
 #include <pjsua2/presence.hpp>
+#include <pjsua2/conference.hpp>
 #include <algorithm>
 #include "util.hpp"
 
@@ -1128,6 +1129,27 @@ void Endpoint::on_buddy_evsub_state(pjsua_buddy_id buddy_id,
 
     buddy->onBuddyEvSubState(prm);
 }
+void Endpoint::on_conference_state(pjsua_conference_id conference_id)
+{
+    Conference *conference = (Conference*)pjsua_conference_get_user_data(conference_id);
+    if (!conference || !conference->isValid()) {
+	return;
+    }
+    conference->onConferenceState();
+}
+void Endpoint::on_conference_evsub_state(pjsua_conference_id conference_id,
+				    pjsip_evsub *sub,
+				    pjsip_event *event)
+{
+    PJ_UNUSED_ARG(sub);
+    Conference *conference = (Conference*)pjsua_conference_get_user_data(conference_id);
+    if (!conference || !conference->isValid()) {
+	return;
+    }
+    OnConferenceEvSubStateParam prm;
+    prm.e.fromPj(*event);
+    conference->onConferenceEvSubState(prm);
+}
 
 // Call callbacks
 void Endpoint::on_call_state(pjsua_call_id call_id, pjsip_event *e)
@@ -1934,6 +1956,8 @@ void Endpoint::libInit(const EpConfig &prmEpConfig) PJSUA2_THROW(Error)
     ua_cfg.cb.on_mwi_info       = &Endpoint::on_mwi_info;
     ua_cfg.cb.on_buddy_state    = &Endpoint::on_buddy_state;
     ua_cfg.cb.on_buddy_evsub_state = &Endpoint::on_buddy_evsub_state;
+    ua_cfg.cb.on_conference_state	= &Endpoint::on_conference_state;
+    ua_cfg.cb.on_conference_evsub_state = &Endpoint::on_conference_evsub_state;
     ua_cfg.cb.on_acc_find_for_incoming  = &Endpoint::on_acc_find_for_incoming;
     ua_cfg.cb.on_ip_change_progress     = &Endpoint::on_ip_change_progress;
 

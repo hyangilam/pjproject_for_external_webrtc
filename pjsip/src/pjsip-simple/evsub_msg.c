@@ -102,23 +102,24 @@ pjsip_event_hdr_shallow_clone( pj_pool_t *pool,
 }
 
 
-/*
- * Allow-Events header.
- */
-PJ_DEF(pjsip_allow_events_hdr*) pjsip_allow_events_hdr_create(pj_pool_t *pool)
-{
-    const pj_str_t STR_ALLOW_EVENTS = { "Allow-Events", 12};
-    pjsip_allow_events_hdr *hdr;
+// conference : move to sip_msg.h
+// /*
+//  * Allow-Events header.
+//  */
+// PJ_DEF(pjsip_allow_events_hdr*) pjsip_allow_events_hdr_create(pj_pool_t *pool)
+// {
+//     const pj_str_t STR_ALLOW_EVENTS = { "Allow-Events", 12};
+//     pjsip_allow_events_hdr *hdr;
 
-    hdr = pjsip_generic_array_hdr_create(pool, &STR_ALLOW_EVENTS);
+//     hdr = pjsip_generic_array_hdr_create(pool, &STR_ALLOW_EVENTS);
 
-    if (hdr) {
-        hdr->sname.ptr = "u";
-        hdr->sname.slen = 1;
-    }
+//     if (hdr) {
+// 	hdr->sname.ptr = "u";
+// 	hdr->sname.slen = 1;
+//     }
 
-    return hdr;
-}
+//     return hdr;
+// }
 
 
 /*

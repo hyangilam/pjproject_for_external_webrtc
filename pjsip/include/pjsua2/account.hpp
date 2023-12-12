@@ -25,6 +25,7 @@
 #include <pjsua-lib/pjsua.h>
 #include <pjsua2/persistent.hpp>
 #include <pjsua2/presence.hpp>
+#include <pjsua2/conference.hpp>
 #include <pjsua2/siptypes.hpp>
 
 /** PJSUA2 API is inside pj namespace */
@@ -475,6 +476,70 @@ public:
      * @param node              Container to write values to.
      */
     virtual void writeObject(ContainerNode &node) const PJSUA2_THROW(Error);
+};
+
+struct AccountConfConfig : public PersistentObject
+{
+    /**
+     * The optional custom SIP headers to be put in the presence
+     * subscription request.
+     */
+    SipHeaderVector	headers;
+
+    // /**
+    //  * If this flag is set, the presence information of this account will
+    //  * be PUBLISH-ed to the server where the account belongs.
+    //  *
+    //  * Default: PJ_FALSE
+    //  */
+    // bool		publishEnabled;
+
+    // /**
+    //  * Specify whether the client publication session should queue the
+    //  * PUBLISH request should there be another PUBLISH transaction still
+    //  * pending. If this is set to false, the client will return error
+    //  * on the PUBLISH request if there is another PUBLISH transaction still
+    //  * in progress.
+    //  *
+    //  * Default: PJSIP_PUBLISHC_QUEUE_REQUEST (TRUE)
+    //  */
+    // bool		publishQueue;
+
+    // /**
+    //  * Maximum time to wait for unpublication transaction(s) to complete
+    //  * during shutdown process, before sending unregistration. The library
+    //  * tries to wait for the unpublication (un-PUBLISH) to complete before
+    //  * sending REGISTER request to unregister the account, during library
+    //  * shutdown process. If the value is set too short, it is possible that
+    //  * the unregistration is sent before unpublication completes, causing
+    //  * unpublication request to fail.
+    //  *
+    //  * Value is in milliseconds.
+    //  *
+    //  * Default: PJSUA_UNPUBLISH_MAX_WAIT_TIME_MSEC (2000)
+    //  */
+    // unsigned		publishShutdownWaitMsec;
+
+    // /**
+    //  * Optional PIDF tuple ID for outgoing PUBLISH and NOTIFY. If this value
+    //  * is not specified, a random string will be used.
+    //  */
+    // string		pidfTupleId;
+
+public:
+    /**
+     * Read this object from a container node.
+     *
+     * @param node		Container to read values from.
+     */
+    virtual void readObject(const ContainerNode &node) throw(Error);
+
+    /**
+     * Write this object to a container node.
+     *
+     * @param node		Container to write values to.
+     */
+    virtual void writeObject(ContainerNode &node) const throw(Error);
 };
 
 /**
@@ -1351,6 +1416,7 @@ struct AccountConfig : public PersistentObject
      */
     AccountMwiConfig    mwiConfig;
 
+    AccountConfConfig 	confConfig;
     /**
      * NAT settings.
      */
@@ -1780,6 +1846,24 @@ public:
     virtual ~FindBuddyMatch() {}
 };
 
+class FindConferenceMatch
+{
+public:
+    /**
+     * Default algo implementation.
+     */
+    virtual bool match(const string &token, const Conference &conference)
+    {
+	ConferenceInfo bi = conference.getInfo();
+	return bi.uri.find(token) != string::npos;
+    }
+
+    /**
+     * Destructor.
+     */
+    virtual ~FindConferenceMatch() {}
+};
+
 
 /**
  * Account.
@@ -1984,6 +2068,9 @@ public:
      */
     Buddy findBuddy2(string uri) const PJSUA2_THROW(Error);
 
+    const ConferenceVector& enumConferences() const throw(Error);
+    Conference* findConference(string uri, FindConferenceMatch *conference_match = NULL) const throw(Error);
+
 public:
     /*
      * Callbacks
@@ -2092,6 +2179,7 @@ public:
 private:
     friend class Endpoint;
     friend class Buddy;
+    friend class Conference;
 
     /**
      * An internal function to add a Buddy to Account buddy list.
@@ -2105,12 +2193,16 @@ private:
      */
     void removeBuddy(Buddy *buddy);
 
+    void addConference(Conference *conference);
+    void removeConference(Conference* conference);
+
 private:
     pjsua_acc_id         id;
     string               tmpReason;     // for saving response's reason
 #if !DEPRECATED_FOR_TICKET_2232
     BuddyVector          buddyList;
 #endif
+    ConferenceVector conferenceList;
 };
 
 /**

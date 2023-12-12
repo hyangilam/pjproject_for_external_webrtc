@@ -369,6 +369,9 @@ PJ_DEF(void) pjsua_acc_config_default(pjsua_acc_config *cfg)
 #endif
     pj_list_init(&cfg->reg_hdr_list);
     pj_list_init(&cfg->sub_hdr_list);
+
+    pj_list_init(&cfg->conf_sub_hdr_list);
+
     cfg->call_hold_type = PJSUA_CALL_HOLD_TYPE_DEFAULT;
     cfg->register_on_acc_add = PJ_TRUE;
     cfg->mwi_expires = PJSIP_MWI_DEFAULT_EXPIRES;
@@ -386,6 +389,11 @@ PJ_DEF(void) pjsua_acc_config_default(pjsua_acc_config *cfg)
 }
 
 PJ_DEF(void) pjsua_buddy_config_default(pjsua_buddy_config *cfg)
+{
+    pj_bzero(cfg, sizeof(*cfg));
+}
+
+PJ_DEF(void) pjsua_conference_config_default(pjsua_conference_config *cfg)
 {
     pj_bzero(cfg, sizeof(*cfg));
 }
@@ -1254,6 +1262,10 @@ PJ_DEF(pj_status_t) pjsua_init( const pjsua_config *ua_cfg,
     status = pjsip_pres_init_module( pjsua_var.endpt, pjsip_evsub_instance());
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
+    /* Init conference module: */
+    status = pjsip_conf_init_module( &pjsua_var, pjsua_var.endpt, pjsip_evsub_instance());
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
+
     /* Initialize MWI support */
     status = pjsip_mwi_init_module(pjsua_var.endpt, pjsip_evsub_instance());
 
@@ -1269,6 +1281,11 @@ PJ_DEF(pj_status_t) pjsua_init( const pjsua_config *ua_cfg,
     if (status != PJ_SUCCESS)
         goto on_error;
 
+    /* Init pjsua conference handler: */
+    status = pjsua_conf_init();
+    if (status != PJ_SUCCESS)
+	goto on_error;
+	
     /* Init out-of-dialog MESSAGE request handler. */
     status = pjsua_im_init();
     if (status != PJ_SUCCESS)
@@ -1948,6 +1965,7 @@ PJ_DEF(pj_status_t) pjsua_destroy2(unsigned flags)
         /* Terminate all presence subscriptions. */
         pjsua_pres_shutdown(flags);
 
+		pjsua_conf_shutdown(flags);
         /* Wait for sometime until all publish client sessions are done
          * (ticket #364)
          */
@@ -2096,6 +2114,14 @@ PJ_DEF(pj_status_t) pjsua_destroy2(unsigned flags)
             }
         }
 
+        /* Destroy pool in the conference object */
+        for (i=0; i<(int)PJ_ARRAY_SIZE(pjsua_var.conference); ++i) {
+            if (pjsua_var.conference[i].pool) {
+                pj_pool_release(pjsua_var.conference[i].pool);
+                pjsua_var.conference[i].pool = NULL;
+            }
+        }
+
         /* Destroy accounts */
         for (i=0; i<(int)PJ_ARRAY_SIZE(pjsua_var.acc); ++i) {
             if (pjsua_var.acc[i].pool) {
@@ -2208,6 +2234,10 @@ PJ_DEF(pj_status_t) pjsua_start(void)
         goto on_return;
 
     status = pjsua_pres_start();
+    if (status != PJ_SUCCESS)
+        goto on_return;
+
+    status = pjsua_conf_start();
     if (status != PJ_SUCCESS)
         goto on_return;
 
@@ -3661,6 +3691,8 @@ PJ_DEF(void) pjsua_dump(pj_bool_t detail)
 
     /* Dump presence status */
     pjsua_pres_dump(detail);
+
+    pjsua_conf_dump(detail);
 
     pj_log_set_decor(old_decor);
     PJ_LOG(3,(THIS_FILE, "Dump complete"));

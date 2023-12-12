@@ -2086,7 +2086,12 @@ void pjsip_dlg_on_rx_response( pjsip_dialog *dlg, pjsip_rx_data *rdata )
             dlg->target = dlg->remote.contact->uri;
         }
 
-        dlg_update_routeset(dlg, rdata);
+
+    if (contact && contact->uri && (contact->isfocus != (dlg->remote.contact)->isfocus) ){
+        (dlg->remote.contact)->isfocus = contact->isfocus;
+    }
+
+	dlg_update_routeset(dlg, rdata);
 
         /* Update remote capability info after the first 2xx response
          * (ticket #1539). Note that the remote capability retrieved here
@@ -2250,7 +2255,7 @@ PJ_DEF(pj_status_t) pjsip_dlg_update_remote_cap(pjsip_dialog *dlg,
                                                 pj_bool_t strict)
 {
     pjsip_hdr_e htypes[] =
-        { PJSIP_H_ACCEPT, PJSIP_H_ALLOW, PJSIP_H_SUPPORTED };
+	{ PJSIP_H_ACCEPT, PJSIP_H_ALLOW, PJSIP_H_SUPPORTED, PJSIP_H_ALLOW_EVENTS };
     unsigned i;
 
     PJ_ASSERT_RETURN(dlg && msg, PJ_EINVAL);
