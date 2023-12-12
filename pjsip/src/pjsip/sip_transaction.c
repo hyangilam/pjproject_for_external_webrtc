@@ -134,6 +134,8 @@ static pj_time_val timeout_timer_val = { (64*PJSIP_T1_TIMEOUT)/1000,
                                          (64*PJSIP_T1_TIMEOUT)%1000 };
 static int max_retrans_count = -1;
 
+static pj_time_val reg_timer_initial_val = {2, 0};
+
 #define TIMER_INACTIVE          0
 #define RETRANSMIT_TIMER        1
 #define TIMEOUT_TIMER           2
@@ -2702,8 +2704,12 @@ static pj_status_t tsx_on_state_null( pjsip_transaction *tsx,
          */
         lock_timer(tsx);
         tsx_cancel_timer( tsx, &tsx->timeout_timer );
-        tsx_schedule_timer( tsx, &tsx->timeout_timer, &timeout_timer_val,
-                            TIMEOUT_TIMER);
+        if (tsx->method.id == PJSIP_REGISTER_METHOD)
+            tsx_schedule_timer(tsx, &tsx->timeout_timer, &reg_timer_initial_val,
+                               TIMEOUT_TIMER);
+        else
+        	tsx_schedule_timer( tsx, &tsx->timeout_timer, &timeout_timer_val,
+                            	TIMEOUT_TIMER);
         unlock_timer(tsx);
 
         /* Start Timer A (or timer E) for retransmission only if unreliable 

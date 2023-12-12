@@ -4162,6 +4162,13 @@ static void schedule_reregistration(pjsua_acc *acc)
         pjsua_cancel_timer(&acc->auto_rereg.timer);
     }
 
+    if (acc->auto_rereg.attempt_cnt >= 1) {
+        PJ_LOG(3, (THIS_FILE, "Reregistration stopped at count %d"
+                , acc->auto_rereg.attempt_cnt
+        ));
+        return;
+    }
+
     /* Update re-registration flag */
     acc->auto_rereg.active = PJ_TRUE;
 
@@ -4187,8 +4194,8 @@ static void schedule_reregistration(pjsua_acc *acc)
     pj_time_val_normalize(&delay);
 
     PJ_LOG(4,(THIS_FILE,
-              "Scheduling re-registration retry for acc %d in %lu seconds..",
-              acc->index, delay.sec));
+            "Scheduling re-registration retry for acc %d in %lu.%lu seconds..",
+            acc->index, delay.sec, delay.msec));
 
     acc->auto_rereg.timer.id = PJ_TRUE;
     if (pjsua_schedule_timer(&acc->auto_rereg.timer, &delay) != PJ_SUCCESS)
