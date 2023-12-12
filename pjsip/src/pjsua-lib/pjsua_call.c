@@ -3393,13 +3393,16 @@ PJ_DEF(pj_status_t) pjsua_call_reinvite2(pjsua_call_id call_id,
     status = acquire_call("pjsua_call_reinvite2()", call_id, &call, &dlg);
     if (status != PJ_SUCCESS)
         goto on_return;
-
+    
+    // skip this for external WebRTC
+#if 0
     if (pjsua_call_media_is_changing(call)) {
         PJ_LOG(1,(THIS_FILE, "Unable to reinvite" ERR_MEDIA_CHANGING));
         status = PJ_EINVALIDOP;
         goto on_return;
     }
-
+#endif
+    
     if (call->inv->state != PJSIP_INV_STATE_CONFIRMED) {
         PJ_LOG(3,(THIS_FILE, "Can not re-INVITE call that is not confirmed"));
         status = PJSIP_ESESSIONSTATE;
@@ -5424,8 +5427,11 @@ static void pjsua_call_on_media_update(pjsip_inv_session *inv,
     }
 
     /* Update media channel with the new SDP */
+#if 0 // skip this for external WebRTC
     status = pjsua_media_channel_update(call->index, local_sdp, remote_sdp);
-
+#else
+    status = PJ_SUCCESS;
+#endif
     /* If this is not the initial INVITE, don't disconnect call due to
      * no media after SDP negotiation.
      */
@@ -5586,12 +5592,14 @@ static void pjsua_call_on_rx_offer(pjsip_inv_session *inv,
               call->index));
 
     pj_log_push_indent();
-
+    
+    // skip this for external WebRTC
+#if 0    
     if (pjsua_call_media_is_changing(call)) {
-        PJ_LOG(1,(THIS_FILE, "Unable to process offer" ERR_MEDIA_CHANGING));
-        goto on_return;
+	PJ_LOG(1,(THIS_FILE, "Unable to process offer" ERR_MEDIA_CHANGING));
+	goto on_return;
     }
-
+#endif
     pjsua_call_cleanup_flag(&call->opt);
     opt = call->opt;
 
@@ -5675,9 +5683,11 @@ static void pjsua_call_on_rx_offer(pjsip_inv_session *inv,
         goto on_return;
     }
 
+    // skip this for external WebRTC
+#if 0    
     /* Validate media count in the generated answer */
     pj_assert(answer->media_count == offer->media_count);
-
+#endif
     /* Check if offer's conn address is zero */
     for (i = 0; i < answer->media_count; ++i) {
         pjmedia_sdp_conn *conn;
