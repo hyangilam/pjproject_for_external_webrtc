@@ -200,11 +200,7 @@
 #       endif
 #       ifdef __IPHONE_4_0
             /* Is multitasking support available?  (see ticket #1107) */
-            #if defined(TARGET_OS_WATCH)
-#           define PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT        0
-            #else
 #           define PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT        1
-            #endif
             /* Activesock TCP background mode support (VoIP socket).
              * Disabled by default, VoIP socket deprecated since iOS 9 and
              * on iOS16 using VoIP socket causes app getting killed.

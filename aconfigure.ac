@@ -536,9 +536,6 @@ case $target in
 	  *-apple-darwin_ios*)
 		ac_os_objs="$ac_os_objs os_info_iphone.o os_core_darwin.o"
 		;;
-	  *-apple-darwin_watchos*)
-		ac_os_objs="$ac_os_objs os_info_iphone.o os_core_darwin.o"
-		;;
 	  *darwin*)
 		ac_os_objs="$ac_os_objs os_core_darwin.o"
 		;;
@@ -937,11 +934,6 @@ else
 	ac_pjmedia_audiodev_objs="coreaudio_dev.o"
 	AC_MSG_RESULT([Checking sound device backend... AudioUnit])
 	;;
-  *-apple-darwin_watchos*)
-	LIBS="$LIBS -framework CoreAudio -framework CoreFoundation -framework CFNetwork -framework UIKit -framework AVFoundation"
-	ac_pjmedia_audiodev_objs="coreaudio_dev.o"
-	AC_MSG_RESULT([Checking sound device backend... AudioUnit])
-	;;
   *darwin*)
 	LIBS="$LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -framework AudioToolbox"
 	ac_pjmedia_audiodev_objs="coreaudio_dev.o"
@@ -1012,9 +1004,6 @@ case $target in
 	LIBS="$LIBS -llog"
 	;;
  *-apple-darwin_ios*)
- 	LIBS="$LIBS -framework UIKit"
-	;;
- *-apple-darwin_watchos*)
  	LIBS="$LIBS -framework UIKit"
 	;;
  *darwin*)
@@ -2345,7 +2334,7 @@ AC_ARG_ENABLE(libwebrtc,
 	      [
 		  AC_MSG_RESULT([Checking if libwebrtc is disabled...no])
 		  case $target in
-		      *-apple-darwin_ios* | *-apple-darwin_watchos*)
+		      *-apple-darwin_ios*)
 			case $target in
 			    arm64*)
 				ac_webrtc_instset=neon
@@ -2439,7 +2428,7 @@ AC_ARG_ENABLE(libwebrtc_aec3,
 		  AC_LANG_POP([C++])
 
 		  case $target in
-		      *-apple-darwin_ios* | *-apple-darwin_watchos*)
+		      *-apple-darwin_ios*)
 			case $target in
 			    arm64*)
 				ac_webrtc_aec3_instset=neon
