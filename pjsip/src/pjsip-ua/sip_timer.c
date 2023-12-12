@@ -642,6 +642,13 @@ PJ_DEF(pj_status_t) pjsip_timer_init_session(
     else
         pj_bzero(inv->timer, sizeof(pjsip_timer));
 
+    if(inv->role == PJSIP_ROLE_UAC)
+        inv->timer->refresher = TR_UAC;
+    else if(inv->role == PJSIP_ROLE_UAS)
+        inv->timer->refresher = TR_UAS;
+	else
+		inv->timer->refresher = TR_UNKNOWN;
+
     s = &inv->timer->setting;
 
     /* Init Session Timers setting */
