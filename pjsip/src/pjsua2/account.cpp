@@ -379,7 +379,17 @@ void AccountMwiConfig::writeObject(ContainerNode &node) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void AccountConfConfig::readObject(const ContainerNode &node) throw(Error)
+{
+    ContainerNode this_node = node.readContainer("AccountConfConfig");
 
+    readSipHeaders(this_node, "headers", headers);
+}
+void AccountConfConfig::writeObject(ContainerNode &node) const throw(Error)
+{
+    ContainerNode this_node = node.writeNewContainer("AccountConfConfig");
+    writeSipHeaders(this_node, "headers", headers);
+}
 void AccountNatConfig::readObject(const ContainerNode &node)
                                   PJSUA2_THROW(Error)
 {
